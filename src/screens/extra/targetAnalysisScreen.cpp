@@ -114,7 +114,7 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
         info_other[n]->hide();
     }
     
-    (new GuiLabel(center_col, "TITLE", tr("Template Information"), 30))
+    (new GuiLabel(center_col, "TITLE", tr("Core Information"), 30))
         ->addBackground()
         ->setAlignment(ACenter)
         ->setPosition(0, 0, ABottomCenter)
