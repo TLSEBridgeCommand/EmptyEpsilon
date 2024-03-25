@@ -227,7 +227,7 @@ EngineeringScreen::EngineeringScreen(GuiContainer* owner, ECrewPosition crew_pos
         {
             repair_label = new GuiLabel(box, "COOLANT_LABEL", tr("slider", "Repair"), 30);
             repair_label->setAlignment(ACenterLeft)->setPosition(20, 220, ATopLeft)->setSize(400, 20);
-            repair_slider = new GuiSlider(box, "COOLANT_SLIDER", 0.0, 10.0, 0.0, [this](float value) {
+            repair_slider = new GuiSlider(box, "COOLANT_SLIDER", 10.0, 0.0, 0.0, [this](float value) {
             if (my_spaceship && selected_system != SYS_None)
                 my_spaceship->commandSetSystemRepairRequest(selected_system, value);
             });
@@ -476,7 +476,7 @@ void EngineeringScreen::onDraw(sf::RenderTarget& window)
             power_slider->setValue(system.power_request);
             coolant_label->setText(tr("Coolant: {coolant_level}%/{coolant_request}%").format({{"coolant_level", string(int(system.coolant_level / my_spaceship->max_coolant_per_system * 100))},{"coolant_request", string(int(std::min(system.coolant_request, my_spaceship->max_coolant) / my_spaceship->max_coolant_per_system * 100))}}));
             coolant_slider->setEnable(!my_spaceship->auto_coolant_enabled);
-            coolant_slider->setRange(0.0, my_spaceship->max_coolant_per_system);
+            coolant_slider->setRange(my_spaceship->max_coolant_per_system, 0.0);
             coolant_slider->setValue(std::min(system.coolant_request, my_spaceship->max_coolant));
 
             if (gameGlobalInfo->use_nano_repair_crew)

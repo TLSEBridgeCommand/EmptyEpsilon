@@ -34,14 +34,14 @@
   - Hotkeys are available for apply and update presets  
 - new screen available : Target analysis screen
   - Once fully scanned, a object can be linked to analysis screen
-  - The target analysis screen displayed all informations available for the object
+  - The target analysis screen displayed all Information available for the object
   - From now : ship, station, asteroid, artifact, planet
 - Structured infos
   - Possibility to add structured infos for a object
   - Science can see these infos after a full scan
   - Need and id for each infos (0-9), a label (string) and a value (string)
 - New Tweak categories and features
-  - Description : affect description and structured informations for all object
+  - Description : affect description and structured Information for all object
   - Message : to send messages to players
   - Warp speed
   - Consumption or production factor by system

@@ -354,7 +354,7 @@ void DockMasterScreen::onDraw(sf::RenderTarget &window)
         case MovingIn:
             displayDroneDetails(dockData);
             overlay->setVisible(true);
-            overlay_label->setText(tr("Incoming cargo"));
+            overlay_label->setText(tr("Transferring cargo"));
             distance_bar->setVisible(true);
             distance_bar->setValue(dockData.current_distance);
             cancel_move_button->setVisible(true);
@@ -375,7 +375,7 @@ void DockMasterScreen::onDraw(sf::RenderTarget &window)
         case MovingOut:
             displayDroneDetails(dockData);
             overlay->setVisible(true);
-            overlay_label->setText(tr("Outgoing cargo"));
+            overlay_label->setText(tr("Transferring cargo"));
             distance_bar->setVisible(true);
             distance_bar->setValue(dockData.current_distance);
             cancel_move_button->setVisible(true);

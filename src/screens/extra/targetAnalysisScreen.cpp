@@ -69,7 +69,7 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
     right_col->setPosition(-25, 50, ATopRight)->setSize(400, GuiElement::GuiSizeMax);
     right_col->setMargins(20, 20, 20, 20);
     
-    (new GuiLabel(left_col, "TITLE", tr("Basic Informations"), 30))
+    (new GuiLabel(left_col, "TITLE", tr("Basic Information"), 30))
         ->addBackground()
         ->setAlignment(ACenter)
         ->setPosition(0, 0, ABottomCenter)
@@ -101,7 +101,7 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
     info_description = new GuiScrollText(left_col, "SCIENCE_DESC", "");
     info_description->setTextSize(28)->setMargins(20, 20, 0, 0)->setSize(GuiElement::GuiSizeMax, 150);
 
-    (new GuiLabel(left_col, "TITLE", tr("Additionnal Informations"), 30))
+    (new GuiLabel(left_col, "TITLE", tr("Additionnal Information"), 30))
         ->addBackground()
         ->setAlignment(ACenter)
         ->setPosition(0, 0, ABottomCenter)
@@ -114,7 +114,7 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
         info_other[n]->hide();
     }
     
-    (new GuiLabel(center_col, "TITLE", tr("Template Informations"), 30))
+    (new GuiLabel(center_col, "TITLE", tr("Core Information"), 30))
         ->addBackground()
         ->setAlignment(ACenter)
         ->setPosition(0, 0, ABottomCenter)

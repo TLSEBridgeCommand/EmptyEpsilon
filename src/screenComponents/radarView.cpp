@@ -568,7 +568,7 @@ void GuiRadarView::drawTargetProjections(sf::RenderTarget& window)
                 {
                     missile_target_angle = missile_tube_controls->getMissileTargetAngle();
                 }else{
-                    float firing_solution = target_spaceship->weapon_tube[n].calculateFiringSolution(target_spaceship->getTarget());
+                    float firing_solution = target_spaceship->weapon_tube[n].calculateFiringSolution(my_spaceship->getTarget(PreferencesManager::get("weapons_specific_station", "0").toInt()));
                     if (firing_solution != std::numeric_limits<float>::infinity())
                         missile_target_angle = firing_solution;
                 }

@@ -95,8 +95,11 @@ P<SpaceObject> GuiDockingButton::findDockingTarget()
     foreach(Collisionable, obj, obj_list)
     {
         dock_object = obj;
-            // SBW: Using sf library instead of glm
-            if (dock_object && dock_object != my_spaceship && dock_object->canBeDockedBy(my_spaceship) != DockStyle::None && sf::length(dock_object->getPosition() - my_spaceship->getPosition()) < 1000.0f + dock_object->getRadius())
+        // SBW: DockingButton in latest Daid code refers to my_spaceship rather than target:
+        //      if (dock_object && dock_object != my_spaceship && dock_object->canBeDockedBy(my_spaceship) != DockStyle::None && sf::length(dock_object->getPosition() - my_spaceship->getPosition()) < 1000.0f + dock_object->getRadius())
+        // This doesn't make any difference in our fork because target_spaceship is always player_spaceship,
+        // but keep it consistent with the rest of the class by referring to target_spaceship
+        if (dock_object && dock_object != target_spaceship && dock_object->canBeDockedBy(target_spaceship) != DockStyle::None && (dock_object->getPosition() - target_spaceship->getPosition()) < 1000.0f + dock_object->getRadius())
             break;
         dock_object = NULL;
     }
