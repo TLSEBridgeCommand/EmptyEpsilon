@@ -28,8 +28,8 @@ function init()
 
     -- A new screen is available, do support science screen
     -- Once fully scanned, a object can be linked to analysis screen
-    -- The target analysis screen displayed all informations available for the object
-    -- From now : informations are ok for
+    -- The target analysis screen displayed all Information available for the object
+    -- From now : Information are ok for
         -- ship, station
         -- asteroid, artifact
         -- planet

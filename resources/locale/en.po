@@ -4348,7 +4348,7 @@ msgid "Instability Level : "
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:72
-msgid "Basic Informations"
+msgid "Basic Information"
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:95
@@ -4356,11 +4356,11 @@ msgid "Description"
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:104
-msgid "Additionnal Informations"
+msgid "Additionnal Information"
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:117
-msgid "Template Informations"
+msgid "Template Information"
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:130

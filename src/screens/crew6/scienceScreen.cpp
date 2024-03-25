@@ -147,7 +147,7 @@ ScienceScreen::ScienceScreen(GuiContainer* owner, ECrewPosition crew_position)
     sidebar_pager->addEntry("Description", "Description");
     
     // Add sidebar page for structured infos.
-    sidebar_pager->addEntry("Informations", "Informations");
+    sidebar_pager->addEntry("Information", "Information");
 
     // Default the pager to the first item.
     sidebar_pager->setSelectionIndex(0);
@@ -177,7 +177,7 @@ ScienceScreen::ScienceScreen(GuiContainer* owner, ECrewPosition crew_position)
     info_description = new GuiScrollText(info_sidebar, "SCIENCE_DESC", "");
     info_description->setTextSize(28)->setMargins(20, 20, 0, 0)->setSize(GuiElement::GuiSizeMax, 400)->hide();
 
-    // Prep and hide the other structured informations
+    // Prep and hide the other structured Information
     for(int n = 0; n < 10; n++)
     {
         info_other[n] = new GuiKeyValueDisplay(info_sidebar, "SCIENCE_INFOS_" + string(n), 0.6, "-", "-");
@@ -491,7 +491,7 @@ void ScienceScreen::onDraw(sf::RenderTarget& window)
                 info_gravity_signal_band->hide();
                 info_biological_signal_band->hide();
             }
-            else if (sidebar_pager_selection == "Informations")
+            else if (sidebar_pager_selection == "Information")
             {
                 info_shield_frequency->hide();
                 info_beam_frequency->hide();
