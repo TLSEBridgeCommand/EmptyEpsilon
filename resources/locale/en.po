@@ -3502,15 +3502,15 @@ msgid "Link to Analysis"
 msgstr ""
 
 #: src/screens/crew6/relayScreen.cpp:116
-msgid "Interaction"
+msgid "Comms Options"
 msgstr ""
 
 #: src/screens/crew6/relayScreen.cpp:135
-msgid "Probe"
+msgid "Probe Options"
 msgstr ""
 
 #: src/screens/crew6/relayScreen.cpp:154
-msgid "Waypoint"
+msgid "Waypoint Options"
 msgstr ""
 
 #: src/screens/crew6/relayScreen.cpp:191 src/screens/crew6/helmsScreen.cpp:91
@@ -4356,7 +4356,7 @@ msgid "Description"
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:104
-msgid "Additionnal Information"
+msgid "Additional Information"
 msgstr ""
 
 #: src/screens/extra/targetAnalysisScreen.cpp:117
