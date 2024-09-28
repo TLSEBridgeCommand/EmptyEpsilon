@@ -101,7 +101,7 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
     info_description = new GuiScrollText(left_col, "SCIENCE_DESC", "");
     info_description->setTextSize(28)->setMargins(20, 20, 0, 0)->setSize(GuiElement::GuiSizeMax, 150);
 
-    (new GuiLabel(left_col, "TITLE", tr("Additional Information"), 30))
+    (new GuiLabel(left_col, "TITLE", tr("Additionnal Information"), 30))
         ->addBackground()
         ->setAlignment(ACenter)
         ->setPosition(0, 0, ABottomCenter)
