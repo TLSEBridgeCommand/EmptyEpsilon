@@ -105,7 +105,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms)
     option_buttons = new GuiAutoLayout(this, "BUTTONS", GuiAutoLayout::LayoutVerticalTopToBottom);
     option_buttons->setPosition(20, 50, ATopLeft)->setSize(250, GuiElement::GuiSizeMax);
     
-    (new GuiLabel(option_buttons, "INTERACTION_LABEL", tr("Interaction"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    (new GuiLabel(option_buttons, "INTERACTION_LABEL", tr("Comms Options"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
 
     // Open comms button.
     if (allow_comms == true)
@@ -124,7 +124,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms)
     hack_target_button->setSize(GuiElement::GuiSizeMax, 50);
 
     (new GuiLabel(option_buttons, "SPACE", "", 30))->setSize(GuiElement::GuiSizeMax, 20);
-    (new GuiLabel(option_buttons, "PROBE_LABEL", tr("Probe"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    (new GuiLabel(option_buttons, "PROBE_LABEL", tr("Probe Options"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
     
     // Launch probe button.
     launch_probe_button = new GuiButton(option_buttons, "LAUNCH_PROBE_BUTTON", tr("Launch Probe"), [this]() {
@@ -143,7 +143,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms)
     link_to_science_button->setSize(GuiElement::GuiSizeMax, 50)->setVisible(my_spaceship && my_spaceship->getCanLaunchProbe());
 
     (new GuiLabel(option_buttons, "SPACE", "", 30))->setSize(GuiElement::GuiSizeMax, 20);
-    (new GuiLabel(option_buttons, "WAYPOINT_LABEL", tr("Waypoint"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    (new GuiLabel(option_buttons, "WAYPOINT_LABEL", tr("Waypoint Options"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
     
     // Manage waypoints.
     (new GuiButton(option_buttons, "WAYPOINT_PLACE_BUTTON", tr("Place Waypoint"), [this]() {

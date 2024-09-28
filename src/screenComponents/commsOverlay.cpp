@@ -88,6 +88,7 @@ GuiCommsOverlay::GuiCommsOverlay(GuiContainer* owner)
     // Message entry field for chat.
     chat_comms_message_entry = new GuiTextEntry(chat_comms_box, "COMMS_CHAT_MESSAGE_ENTRY", "");
     chat_comms_message_entry->setPosition(20, -20, ABottomLeft)->setSize(640, 50);
+    chat_comms_message_entry->setFocus(); 
     chat_comms_message_entry->enterCallback([this](string text){
         if (my_spaceship)
             my_spaceship->commandSendCommPlayer(chat_comms_message_entry->getText());
