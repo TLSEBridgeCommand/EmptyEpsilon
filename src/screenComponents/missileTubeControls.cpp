@@ -80,10 +80,10 @@ GuiMissileTubeControls::GuiMissileTubeControls(GuiContainer* owner, string id, P
         load_type_rows[n].button->setTextSize(28)->setSize(200, 40);
     }
     load_type_rows[MW_Homing].button->setIcon("gui/icons/weapon-homing.png");
+    load_type_rows[MW_Mine].button->setIcon("gui/icons/weapon-mine.png");
     load_type_rows[MW_EMP].button->setIcon("gui/icons/weapon-emp.png");
     load_type_rows[MW_Nuke].button->setIcon("gui/icons/weapon-nuke.png");
     load_type_rows[MW_HVLI].button->setIcon("gui/icons/weapon-hvli.png");
-    load_type_rows[MW_Mine].button->setIcon("gui/icons/weapon-mine.png");
 }
 
 void GuiMissileTubeControls::setTargetSpaceship(P<PlayerSpaceship> targetSpaceship){
