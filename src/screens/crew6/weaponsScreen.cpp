@@ -118,7 +118,7 @@ WeaponsScreen::WeaponsScreen(GuiContainer* owner)
 
     (new GuiCustomShipFunctions(this, weaponsOfficer, "", my_spaceship))->setPosition(-20, 120, ATopRight)->setSize(250, GuiElement::GuiSizeMax);
 
-    new ShipsLog(this, weaponsOfficer);
+    // new ShipsLog(this, weaponsOfficer);
 }
 
 void WeaponsScreen::onDraw(sf::RenderTarget& window)

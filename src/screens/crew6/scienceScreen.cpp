@@ -259,7 +259,7 @@ ScienceScreen::ScienceScreen(GuiContainer* owner, ECrewPosition crew_position)
     // Scanning dialog.
     new GuiScanningDialog(this, "SCANNING_DIALOG");
 
-    new ShipsLog(this, crew_position);
+    // new ShipsLog(this, crew_position);
 }
 
 void ScienceScreen::onDraw(sf::RenderTarget& window)
