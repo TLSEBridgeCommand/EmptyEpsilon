@@ -498,6 +498,11 @@ public:
 
     int getBeamFrequency(){ return beam_frequency; }
 
+    /// why are you not here?
+    int getBeamsButtonStation() {return beams_button_station;}
+    int getShieldsStation() {return shields_station;}
+    int getLockButtonStation() {return lock_button_station;}
+
     void setBeamWeapon(int index, float arc, float direction, float range, float cycle_time, float damage)
     {
         if (index < 0 || index >= max_beam_weapons)
