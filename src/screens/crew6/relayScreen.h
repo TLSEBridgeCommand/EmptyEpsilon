@@ -54,7 +54,7 @@ private:
 
     sf::Vector2f mouse_down_position;
 public:
-    RelayScreen(GuiContainer* owner, bool allow_comms);
+    RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert);
 
     virtual void onDraw(sf::RenderTarget& window);
     virtual void onHotkey(const HotkeyResult& key) override;

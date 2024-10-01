@@ -88,7 +88,7 @@ DockMasterScreen::DockMasterScreen(GuiContainer *owner)
 
     action_move = new GuiAutoLayout(topPanel, "ACTION_MOVE", GuiAutoLayout::LayoutVerticalColumns);
     action_move->setSize(GuiElement::GuiSizeMax, 50)->setPosition(0, 50, ATopCenter);
-    (new GuiLabel(action_move, "MOVE_DEST_LABEL", tr("Deliver to :"), 30))->setAlignment(ACenterRight);
+    (new GuiLabel(action_move, "MOVE_DEST_LABEL", tr("Transfer to :"), 30))->setAlignment(ACenterRight);
     action_move_selector = new GuiSelector(action_move, "MOVE_DEST_SELECTOR", [this](int _idx, string value) {
         if (my_spaceship)
             my_spaceship->commandSetDockMoveTarget(index, value.toInt());

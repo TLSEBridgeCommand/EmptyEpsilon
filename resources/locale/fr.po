@@ -895,7 +895,7 @@ msgstr "Cible"
 #: src/screenComponents/missileTubeControls.cpp:155
 #: src/screenComponents/missileTubeControls.cpp:24
 msgctxt "missile"
-msgid "Load"
+msgid "Load In"
 msgstr "Charger"
 
 #: src/screenComponents/missileTubeControls.cpp:109
@@ -908,7 +908,7 @@ msgstr "Vide"
 #: src/screenComponents/missileTubeControls.cpp:130
 #: src/screenComponents/missileTubeControls.cpp:146
 msgctxt "missile"
-msgid "Unload"
+msgid "Load Out"
 msgstr "Decharger"
 
 #: src/screenComponents/missileTubeControls.cpp:126
@@ -1055,7 +1055,7 @@ msgstr "Warp"
 #: src/spaceObjects/spaceship.cpp:1417 src/spaceObjects/spaceship.cpp:1429
 #: src/spaceObjects/spaceship.cpp:1808 src/spaceObjects/spaceship.cpp:1832
 msgctxt "missile"
-msgid "Homing"
+msgid "Torpedo"
 msgstr "Missile"
 
 #: src/spaceObjects/spaceship.cpp:1419 src/spaceObjects/spaceship.cpp:1431
@@ -1721,7 +1721,7 @@ msgstr "De la taille d'une ville tentaculaire, les stations de cette ampleur rep
 
 #: src/scienceDatabase.cpp:306
 msgctxt "database"
-msgid "Template"
+msgid "Spacecraft"
 msgstr "Modele"
 
 #: src/playerInfo.cpp:239 src/playerInfo.cpp:252
@@ -2468,7 +2468,7 @@ msgstr "Profondeur du scan:"
 #: src/screenComponents/fireLock.cpp:8
 #: src/screenComponents/missileTubeControls.cpp:40
 msgctxt "missile"
-msgid "Fire"
+msgid "Beams"
 msgstr "Feu"
 
 #: src/screenComponents/systemEffectsList.cpp:180
@@ -3059,7 +3059,7 @@ msgid "ZX-Lindworm"
 msgstr "ZX-Lindworm"
 
 #: scripts/science_db.lua:5
-msgid "Natural"
+msgid "Celestial Bodies"
 msgstr "Naturel"
 
 #: scripts/science_db.lua:6 src/screens/extra/targetAnalysisScreen.cpp:225
@@ -3864,7 +3864,7 @@ msgid "Dock management"
 msgstr "Gestion du dock"
 
 #: src/screens/extra/dockMasterScreen.cpp:91
-msgid "Deliver to :"
+msgid "Transfer to :"
 msgstr "Transferer a :"
 
 #: src/screens/extra/dockMasterScreen.cpp:97
@@ -4006,19 +4006,19 @@ msgstr "Niveau d'instabilite : "
 
 #: src/screens/extra/targetAnalysisScreen.cpp:72
 msgid "Basic Information"
-msgstr "Information basiques"
+msgstr "Informations basiques"
 
 #: src/screens/extra/targetAnalysisScreen.cpp:95
 msgid "Description"
 msgstr "Description"
 
 #: src/screens/extra/targetAnalysisScreen.cpp:104
-msgid "Additionnal Information"
+msgid "Additional Information"
 msgstr "Information additionnelles"
 
 #: src/screens/extra/targetAnalysisScreen.cpp:117
-msgid "Template Information"
-msgstr "Information usine"
+msgid "Core Information"
+msgstr "Informations usine"
 
 #: src/screens/extra/targetAnalysisScreen.cpp:130
 msgid "Systems"

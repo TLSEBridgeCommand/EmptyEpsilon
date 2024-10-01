@@ -21,7 +21,7 @@ GuiMissileTubeControls::GuiMissileTubeControls(GuiContainer* owner, string id, P
         TubeRow row;
         row.layout = new GuiAutoLayout(this, id + "_ROW_" + string(n), LayoutHorizontalLeftToRight);
         row.layout->setSize(GuiElement::GuiSizeMax, 50);
-        row.load_button = new GuiButton(row.layout, id + "_" + string(n) + "_LOAD_BUTTON", tr("missile","Load"), [this, n]() {
+        row.load_button = new GuiButton(row.layout, id + "_" + string(n) + "_LOAD_BUTTON", tr("missile","Load In"), [this, n]() {
             if (!target_spaceship)
                 return;
             if (target_spaceship->weapon_tube[n].isEmpty())
@@ -120,21 +120,21 @@ void GuiMissileTubeControls::onDraw(sf::RenderTarget& window){
         if(tube.isEmpty())
         {
             rows[n].load_button->setEnable(tube.canLoad(load_type));
-            rows[n].load_button->setText(tr("missile","Load"));
+            rows[n].load_button->setText(tr("missile","Load In"));
             rows[n].fire_button->disable()->show();
             rows[n].fire_button->setText(tube.getTubeName() + ": " + tr("missile","Empty"));
             rows[n].loading_bar->hide();
         }else if(tube.isLoaded())
         {
             rows[n].load_button->enable();
-            rows[n].load_button->setText(tr("missile","Unload"));
+            rows[n].load_button->setText(tr("missile","Load Out"));
             rows[n].fire_button->enable()->show();
             rows[n].fire_button->setText(tube.getTubeName() + ": " + getLocaleMissileWeaponName(tube.getLoadType()));
             rows[n].loading_bar->hide();
         }else if(tube.isLoading())
         {
             rows[n].load_button->disable();
-            rows[n].load_button->setText(tr("missile","Load"));
+            rows[n].load_button->setText(tr("missile","Load In"));
             rows[n].fire_button->hide();
             rows[n].fire_button->setText(tube.getTubeName() + ": " + getLocaleMissileWeaponName(tube.getLoadType()));
             rows[n].loading_bar->show();
@@ -143,7 +143,7 @@ void GuiMissileTubeControls::onDraw(sf::RenderTarget& window){
         }else if(tube.isUnloading())
         {
             rows[n].load_button->disable();
-            rows[n].load_button->setText(tr("missile","Unload"));
+            rows[n].load_button->setText(tr("missile","Load Out"));
             rows[n].fire_button->hide();
             rows[n].fire_button->setText(getLocaleMissileWeaponName(tube.getLoadType()));
             rows[n].loading_bar->show();
@@ -152,7 +152,7 @@ void GuiMissileTubeControls::onDraw(sf::RenderTarget& window){
         }else if(tube.isFiring())
         {
             rows[n].load_button->disable();
-            rows[n].load_button->setText(tr("missile","Load"));
+            rows[n].load_button->setText(tr("missile","Load In"));
             rows[n].fire_button->disable()->show();
             rows[n].fire_button->setText(tr("missile","Firing"));
             rows[n].loading_bar->hide();

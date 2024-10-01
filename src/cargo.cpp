@@ -30,7 +30,7 @@ Cargo::Entries Cargo::getEntries()
                 label = "-";
                 break;
             case MW_Homing:
-                label = "HOMING";
+                label = "TORPEDO";
                 icon = "gui/icons/weapon-homing.png";
                 break;
             case MW_Nuke:
