@@ -215,6 +215,9 @@ public:
     BeamWeapon beam_weapons[max_beam_weapons];
     TractorBeam tractor_beam;
     std::set<SpaceShip*> targetedByTractorBeams;
+    int beams_button_station;
+    int shields_station;
+    int lock_button_station;
 
     /**
      * Frequency setting of the shields.
