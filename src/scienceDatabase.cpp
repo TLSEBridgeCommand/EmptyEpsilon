@@ -231,7 +231,7 @@ static int queryScienceDatabase(lua_State* L)
 
 /// finds a ScienceDatabase entry by its case-insensitive name. You have to give the full path to the entry by using multiple arguments.
 /// Returns nil if no entry is found.
-/// e.g. local mine_db = queryScienceDatabase("Natural", "Mine")
+/// e.g. local mine_db = queryScienceDatabase("Celestial Bodies", "Mine")
 REGISTER_SCRIPT_FUNCTION(queryScienceDatabase);
 
 static int getScienceDatabases(lua_State* L)
@@ -303,7 +303,7 @@ void fillDefaultDatabaseData()
     }
 
     P<ScienceDatabase> shipDatabase = new ScienceDatabase();
-    shipDatabase->setName(tr("database", "Template"));
+    shipDatabase->setName(tr("database", "Spacecrafts"));
 
     std::vector<string> template_names = ShipTemplate::getTemplateNameList(ShipTemplate::Ship);
     std::vector<string> template_names_drones = ShipTemplate::getTemplateNameList(ShipTemplate::Drone);

@@ -5,7 +5,7 @@
 #include "spaceObjects/playerSpaceship.h"
 
 FireLockButton::FireLockButton(GuiContainer* owner, string id, P<PlayerSpaceship> targetSpaceship)
-: GuiToggleButton(owner, id, tr("missile","Fire"), [this](bool value){setFireLock(value);}), target_spaceship(targetSpaceship)
+: GuiToggleButton(owner, id, tr("missile","Beams"), [this](bool value){setFireLock(value);}), target_spaceship(targetSpaceship)
 {
     setValue(true);
     setIcon("gui/icons/lock");

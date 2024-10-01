@@ -161,6 +161,9 @@ public:
     float long_range_radar_range = 30000.0f;
     float short_range_radar_range = 5000.0f;
     string impulse_sound_file;
+    int beams_button_station;
+    int shields_station;
+    int lock_button_station;
 
     std::vector<ShipRoomTemplate> rooms;
     std::vector<ShipDoorTemplate> doors;
@@ -201,6 +204,10 @@ public:
     void setBeamWeaponTurret(int index, float arc, float direction, float rotation_rate);
     void setBeamStation(int index, int station);
     void setTractorBeam(float max_range, float drag_per_second);
+    // add beams button station
+    void setBeamsButtonStation(int station);
+    void setShieldsStation(int station);
+    void setLockButtonStation(int station);
     /**
      * Convenience function to set the texture of a beam by index.
      */

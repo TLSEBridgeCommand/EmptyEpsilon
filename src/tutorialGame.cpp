@@ -85,7 +85,7 @@ void TutorialGame::createScreens()
     station_screen[1] = new WeaponsScreen(this);
     station_screen[2] = new EngineeringScreen(this);
     station_screen[3] = new ScienceScreen(this);
-    station_screen[4] = new RelayScreen(this, true);
+    station_screen[4] = new RelayScreen(this, true, true);
     station_screen[5] = new TacticalScreen(this);
     station_screen[6] = new OperationScreen(this);
     station_screen[7] = new TractorBeamScreen(this);
