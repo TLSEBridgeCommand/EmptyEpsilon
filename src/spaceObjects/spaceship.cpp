@@ -375,6 +375,10 @@ void SpaceShip::applyTemplateValues()
     tractor_beam.setMaxArea(ship_template->tractor_beam.getMaxArea());
     tractor_beam.setDragPerSecond(ship_template->tractor_beam.getDragPerSecond());
 
+    beams_button_station = ship_template->beams_button_station;
+    shields_station = ship_template->shields_station;
+    lock_button_station = ship_template->lock_button_station;
+
     weapon_tube_count = ship_template->weapon_tube_count;
     energy_level = max_energy_level = ship_template->energy_storage_amount;
 
@@ -1890,7 +1894,7 @@ string getMissileWeaponName(EMissileWeapons missile)
     case MW_None:
         return "-";
     case MW_Homing:
-        return "Homing";
+        return "Torpedo";
     case MW_Nuke:
         return "Nuke";
     case MW_Mine:
@@ -1911,7 +1915,7 @@ string getLocaleMissileWeaponName(EMissileWeapons missile)
     case MW_None:
         return "-";
     case MW_Homing:
-        return tr("missile","Homing");
+        return tr("missile","Torpedo");
     case MW_Nuke:
         return tr("missile","Nuke");
     case MW_Mine:
