@@ -260,7 +260,7 @@ SpaceShip::SpaceShip(string multiplayerClassName, float multiplayer_significant_
     registerMemberReplication(&radar_trace);
     // registering variables for weapon stations
     registerMemberReplication(&beams_button_station);
-    registerMemberReplication(&shields_button);
+    registerMemberReplication(&shields_station);
     registerMemberReplication(&lock_button_station);
 
     
