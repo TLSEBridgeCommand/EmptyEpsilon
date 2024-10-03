@@ -303,7 +303,7 @@ void fillDefaultDatabaseData()
     }
 
     P<ScienceDatabase> shipDatabase = new ScienceDatabase();
-    shipDatabase->setName(tr("database", "Spacecrafts"));
+    shipDatabase->setName(tr("database", "Spacecraft"));
 
     std::vector<string> template_names = ShipTemplate::getTemplateNameList(ShipTemplate::Ship);
     std::vector<string> template_names_drones = ShipTemplate::getTemplateNameList(ShipTemplate::Drone);

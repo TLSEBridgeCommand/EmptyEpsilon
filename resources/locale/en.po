@@ -1841,7 +1841,7 @@ msgstr ""
 
 #: src/scienceDatabase.cpp:306
 msgctxt "database"
-msgid "Spacecrafts"
+msgid "Spacecraft"
 msgstr ""
 
 #: src/playerInfo.cpp:239 src/playerInfo.cpp:252
