@@ -299,7 +299,19 @@ void BeamWeapon::fire(P<SpaceObject> target, ESystem system_target)
     P<BeamEffect> effect = new BeamEffect();
     effect->setSource(parent, position);
     effect->setTarget(target, hit_location);
-    effect->beam_texture = beam_texture;
+    damage_done_type = getDamageType();
+    if (damage_done_type == 1)
+    {
+        effect->beam_texture = "beam_purple.png";
+    }
+    else if (damage_done_type == 2 || damage_done_type == 3)
+    {
+        effect->beam_texture = "beam_blue.png";
+    }
+    else
+    {
+        effect->beam_texture = beam_texture;
+    }
     effect->beam_fire_sound = "sfx/laser_fire.wav";
     effect->beam_fire_sound_power = damage / 6.0f;
 
@@ -308,7 +320,6 @@ void BeamWeapon::fire(P<SpaceObject> target, ESystem system_target)
     info.system_target = system_target;
 
     target->takeDamage(damage, info);
-    damage_done_type = getDamageType();
     parent->forceMemberReplicationUpdate(&damage_done_type);
     damage_update_delay = 0.5f;
 }

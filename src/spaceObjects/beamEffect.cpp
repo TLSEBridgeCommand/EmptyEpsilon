@@ -139,13 +139,22 @@ void BeamEffect::update(float delta)
 
 void BeamEffect::setSource(P<SpaceObject> source, sf::Vector3f offset)
 {
-    sourceId = source->getMultiplayerId();
-    sourceOffset = offset;
-    update(0);
+   if (source)
+     {
+         sourceId = source->getMultiplayerId();
+         sourceOffset = offset;
+         update(0);
+     }
+     else
+     {
+         LOG(DEBUG) << "BeamEffect attempted with no target";
+     }
 }
 
 void BeamEffect::setTarget(P<SpaceObject> target, sf::Vector2f hitLocation)
 {
+    if (target)
+    {
     target_id = target->getMultiplayerId();
     float r = target->getRadius();
     hitLocation -= target->getPosition();
@@ -160,4 +169,9 @@ void BeamEffect::setTarget(P<SpaceObject> target, sf::Vector2f hitLocation)
     sf::Vector3f hitPos(targetLocation.x, targetLocation.y, targetOffset.z);
     sf::Vector3f targetPos(target->getPosition().x, target->getPosition().y, target->getPositionZ());
     hitNormal = sf::normalize(targetPos - hitPos);
+    }
+    else
+    {
+         LOG(DEBUG) << "BeamEffect attempted with no target";
+     }
 }

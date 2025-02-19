@@ -81,7 +81,7 @@ void FighterAI::runAttack(P<SpaceObject> target)
         {
             attack_state = recharge;
             aggression += random(0.1, 0.25);
-            timeout = 60.0f - std::min(aggression, 1.0f) * 20.0f;
+            timeout = 30.0f - std::min(aggression, 1.0f) * 20.0f;
         }
         break;
     case evade:
@@ -96,7 +96,7 @@ void FighterAI::runAttack(P<SpaceObject> target)
         }
         break;
     case recharge:
-        if (owner->shield_level[0] > owner->shield_max[0] * 0.9 || timeout <= 0.0)
+        if (owner->shield_level[0] > owner->shield_max[0] * 0.2 || timeout <= 0.0)
         {
             attack_state = dive;
         }else{

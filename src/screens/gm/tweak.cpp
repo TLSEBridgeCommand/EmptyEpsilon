@@ -3,6 +3,7 @@
 #include "playerInfo.h"
 #include "gameGlobalInfo.h"
 #include "spaceObjects/spaceship.h"
+#include "logging.h"
 
 #include "gui/gui2_listbox.h"
 #include "gui/gui2_autolayout.h"
@@ -1318,13 +1319,15 @@ GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
     // Set object's heading.
     (new GuiLabel(left_col, "", tr("Heading:"), 30))->setSize(GuiElement::GuiSizeMax, 50);
     heading_slider = new GuiSlider(left_col, "", 0.0, 359.9, 0.0, [this](float value) {
-        target->setHeading(value);
+        if (target != nullptr) 
+            target->setHeading(value);
     });
     heading_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
     
     // Set object's z position.
     (new GuiLabel(left_col, "", tr("Z Position:"), 30))->setSize(GuiElement::GuiSizeMax, 50);
     position_z_slider = new GuiSlider(left_col, "", -300.0, 300.0, 0.0, [this](float value) {
+        if (target != nullptr) 
         target->setPositionZ(value);
     });
     position_z_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
@@ -1337,6 +1340,7 @@ GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
     hull_label = new GuiLabel(left_col, "", "Hull:", 30);
     hull_label->setSize(GuiElement::GuiSizeMax, 50);
     hull_slider = new GuiSlider(left_col, "", 0.0, 500, 0.0, [this](float value) {
+        if (target != nullptr) 
         target->hull = value;
     });
     hull_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
@@ -1345,18 +1349,21 @@ GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
     // Radar signature
 	(new GuiLabel(right_col, "", tr("Gravity signature (blue):"), 30))->setSize(GuiElement::GuiSizeMax, 50);
 	gravity_slider = new GuiSlider(right_col, "", -100.0, 100.0, 0.0, [this](float value) {
+        if (target != nullptr) 
         target->radar_signature.gravity = value / 100.0f;
     });
     gravity_slider->addSnapValue(0.0f, 5.0f);
     gravity_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
  	(new GuiLabel(right_col, "", tr("Energy signature (red):"), 30))->setSize(GuiElement::GuiSizeMax, 50);
 	electrical_slider = new GuiSlider(right_col, "", -100.0, 100.0, 0.0, [this](float value) {
+        if (target != nullptr) 
         target->radar_signature.electrical = value / 100.0f;
     });
     electrical_slider->addSnapValue(0.0f, 5.0f);
     electrical_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
  	(new GuiLabel(right_col, "", tr("Biology signature (green):"), 30))->setSize(GuiElement::GuiSizeMax, 50);
 	biological_slider = new GuiSlider(right_col, "", -100.0, 100.0, 0.0, [this](float value) {
+        if (target != nullptr) 
         target->radar_signature.biological = value / 100.0f;
     });
     biological_slider->addSnapValue(0.0f, 5.0f);
@@ -1364,12 +1371,14 @@ GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
 
     (new GuiLabel(right_col, "", tr("Scanning Complexity:"), 30))->setSize(GuiElement::GuiSizeMax, 50);
     scanning_complexity_slider = new GuiSlider(right_col, "", 0, 4, 0, [this](float value) {
+        if (target != nullptr) 
         target->setScanningParameters(value,target->scanningChannelDepth(target));
     });
     scanning_complexity_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
 
     (new GuiLabel(right_col, "", tr("Scanning Depth:"), 30))->setSize(GuiElement::GuiSizeMax, 50);
     scanning_depth_slider = new GuiSlider(right_col, "", 1, 5, 0, [this](float value) {
+        if (target != nullptr) 
         target->setScanningParameters(target->scanningComplexity(target),value);
     });
     scanning_depth_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
@@ -1377,20 +1386,24 @@ GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
 
 void GuiObjectTweakBase::onDraw(sf::RenderTarget& window)
 {
-    heading_slider->setValue(target->getHeading());
-    position_z_slider->setValue(target->getPositionZ());
-    hull_slider->setValue(target->hull);
-    P<ShipTemplateBasedObject> ship = target;
-    hull_label->setVisible(!ship);
-    hull_slider->setVisible(!ship);
+    // LOG(DEBUG) << "HAVE YOU STOPPED CRASHING YET "<< target;
+    if (target != nullptr)
+    {
+        heading_slider->setValue(target->getHeading());
+        position_z_slider->setValue(target->getPositionZ());
+        hull_slider->setValue(target->hull);
+        P<ShipTemplateBasedObject> ship = target;
+        hull_label->setVisible(!ship);
+        hull_slider->setVisible(!ship);
 
-    // we probably dont need to set these each onDraw
-    // but doing it forces the slider to round to a integer
-    scanning_complexity_slider->setValue(target->scanningComplexity(target));
-    scanning_depth_slider->setValue(target->scanningChannelDepth(target));
-    gravity_slider->setValue(target->radar_signature.gravity * 100.0f);
-    electrical_slider->setValue(target->getRadarSignatureElectrical() * 100.0f);
-	biological_slider->setValue(target->getRadarSignatureBiological() * 100.0f);
+        // we probably dont need to set these each onDraw
+        // but doing it forces the slider to round to a integer
+        scanning_complexity_slider->setValue(target->scanningComplexity(target));
+        scanning_depth_slider->setValue(target->scanningChannelDepth(target));
+        gravity_slider->setValue(target->radar_signature.gravity * 100.0f);
+        electrical_slider->setValue(target->getRadarSignatureElectrical() * 100.0f);
+        biological_slider->setValue(target->getRadarSignatureBiological() * 100.0f);
+    }
 }
 
 void GuiObjectTweakBase::open(P<SpaceObject> target)
