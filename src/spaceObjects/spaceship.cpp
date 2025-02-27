@@ -258,9 +258,15 @@ SpaceShip::SpaceShip(string multiplayerClassName, float multiplayer_significant_
     registerMemberReplication(&combat_maneuver_boost_speed);
     registerMemberReplication(&combat_maneuver_strafe_speed);
     registerMemberReplication(&radar_trace);
-    
+
+    // registering variables for weapon stations
+    registerMemberReplication(&beams_button_station);
+    registerMemberReplication(&shields_station);
+    registerMemberReplication(&lock_button_station);
+
     for(int n=0; n<max_target_id; n++)
     {
+
         target_id[n] = -1;
         registerMemberReplication(&target_id[n]);
     }
