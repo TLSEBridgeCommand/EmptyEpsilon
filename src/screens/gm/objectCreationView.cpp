@@ -78,6 +78,14 @@ GuiObjectCreationView::GuiObjectCreationView(GuiContainer* owner)
     misc_object_creation_scripts.push_back("Mine():setFactionId($FACTION_ID)");
     y += 30;
 
+    misc_object_listbox->addEntry("INVISIBLE MINE", "Create Invisible Mine");
+    misc_object_creation_scripts.push_back("InvisibleMine()");
+    y += 30;
+
+    // misc_object_listbox->addEntry("Electronic Explosion", "Create Electronic Explosion Effect");
+    // misc_object_creation_scripts.push_back("ElectricExplosionEffect()");
+    // y += 30;
+
     misc_object_listbox->addEntry("SUPPLY DROP", "Supply Drop");
     misc_object_creation_scripts.push_back("SupplyDrop():setFactionId($FACTION_ID):setEnergy(500):setWeaponStorage('Nuke', 1):setWeaponStorage('Homing', 4):setWeaponStorage('Mine', 2):setWeaponStorage('EMP', 1)");
     y += 30;

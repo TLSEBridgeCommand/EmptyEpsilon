@@ -280,7 +280,10 @@ void WeaponTube::update(float delta)
         case WTS_Unloading:
             state = WTS_Empty;
             if (parent->weapon_storage[type_loaded] < parent->weapon_storage_max[type_loaded])
-            type_loaded = MW_None;
+            {
+                parent->weapon_storage[type_loaded]++;
+                type_loaded = MW_None;
+            }
             break;
         case WTS_Firing:
             if (game_server)

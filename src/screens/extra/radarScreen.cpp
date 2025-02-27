@@ -24,12 +24,12 @@ RadarScreen::RadarScreen(GuiContainer* owner, string type)
     if (type == "tactical")
     {   
         radar->setDistance(my_spaceship->getShortRangeRadarRange());
-        radar->setRangeIndicatorStepSize(1000.0f)->shortRange();
+        radar->setRangeIndicatorStepSize(1000.0f)->shortRange()->enableHeadingIndicators();
     }
     
     if (type == "long_range"){
         radar->setDistance(my_spaceship->getLongRangeRadarRange());
-        radar->setRangeIndicatorStepSize(5000.0f)->longRange();
+        radar->setRangeIndicatorStepSize(5000.0f)->longRange()->enableHeadingIndicators();
         radar->setFogOfWarStyle(GuiRadarView::NebulaFogOfWar);
     }
 

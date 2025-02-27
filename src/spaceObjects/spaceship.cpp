@@ -258,11 +258,6 @@ SpaceShip::SpaceShip(string multiplayerClassName, float multiplayer_significant_
     registerMemberReplication(&combat_maneuver_boost_speed);
     registerMemberReplication(&combat_maneuver_strafe_speed);
     registerMemberReplication(&radar_trace);
-    // registering variables for weapon stations
-    registerMemberReplication(&beams_button_station);
-    registerMemberReplication(&shields_station);
-    registerMemberReplication(&lock_button_station);
-
     
     for(int n=0; n<max_target_id; n++)
     {
@@ -377,12 +372,12 @@ void SpaceShip::applyTemplateValues()
         beam_weapons[n].setStation(ship_template->beams[n].getStation());
     }
 
-    tractor_beam.setMaxArea(ship_template->tractor_beam.getMaxArea());
-    tractor_beam.setDragPerSecond(ship_template->tractor_beam.getDragPerSecond());
-
     beams_button_station = ship_template->beams_button_station;
     shields_station = ship_template->shields_station;
     lock_button_station = ship_template->lock_button_station;
+
+    tractor_beam.setMaxArea(ship_template->tractor_beam.getMaxArea());
+    tractor_beam.setDragPerSecond(ship_template->tractor_beam.getDragPerSecond());
 
     weapon_tube_count = ship_template->weapon_tube_count;
     energy_level = max_energy_level = ship_template->energy_storage_amount;
@@ -1859,7 +1854,7 @@ bool SpaceShip::tryDockDrone(SpaceShip* other){
 }
 
 float SpaceShip::getDronesControlRange() { 
-    return Tween<float>::easeInQuad(getSystemEffectiveness(SYS_Scanner), 0.0, 3.0, 0.001, 50000.0); 
+    return Tween<float>::easeInQuad(getSystemEffectiveness(SYS_Scanner), 0.0, 3.0, 0.001, 700000.0); 
 }
 
 void SpaceShip::setOxygenZone(int index, string label, float oxygen_level, float oxygen_max, float recharge_rate_per_second, float discharge_rate_per_second)

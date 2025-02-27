@@ -290,6 +290,7 @@ set(SOURCES
 	src/spaceObjects/cpuShip.cpp
 	src/spaceObjects/asteroid.cpp
 	src/spaceObjects/mine.cpp
+	src/spaceObjects/invisibleMine.cpp
 	src/spaceObjects/blackHole.cpp
 	src/spaceObjects/playerSpaceship.cpp
 	src/spaceObjects/beamEffect.cpp
@@ -550,14 +551,14 @@ endif()
 
 find_package(PythonInterp)
 if(PYTHONINTERP_FOUND)
-  add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR}/script_reference.html
-        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/compile_script_docs.py ${CMAKE_BINARY_DIR}/script_reference.html
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Building script reference documentation.")
-  add_custom_target(script_reference ALL DEPENDS ${CMAKE_BINARY_DIR}/script_reference.html)
-  install(FILES ${CMAKE_BINARY_DIR}/script_reference.html DESTINATION .)
-endif()
+   add_custom_command(
+         OUTPUT ${CMAKE_BINARY_DIR}/script_reference.html
+         COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/compile_script_docs.py ${CMAKE_BINARY_DIR}/script_reference.html
+         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+         COMMENT "Building script reference documentation.")
+   add_custom_target(script_reference ALL DEPENDS ${CMAKE_BINARY_DIR}/script_reference.html)
+   install(FILES ${CMAKE_BINARY_DIR}/script_reference.html DESTINATION .)
+ endif()
 
 add_custom_target(update_locale
 	COMMAND xgettext --keyword=tr:1c,2 --keyword=tr:1 --keyword=trMark:1c,2 --keyword=trMark:1 --omit-header -j -d resources/locale/en ${SOURCES}
