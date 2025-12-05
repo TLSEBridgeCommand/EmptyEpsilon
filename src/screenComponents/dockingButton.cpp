@@ -95,6 +95,12 @@ P<SpaceObject> GuiDockingButton::findDockingTarget()
     foreach(Collisionable, obj, obj_list)
     {
         dock_object = obj;
+        P<SpaceShip> dock_ship = dock_object;
+        if (dock_ship && dock_ship->getDockingState() == 1 || dock_ship && dock_ship->getDockedWith() == target_spaceship)
+        {
+            dock_object = NULL;
+            continue;
+        }
         // SBW: DockingButton in latest Daid code refers to my_spaceship rather than target:
         //      if (dock_object && dock_object != my_spaceship && dock_object->canBeDockedBy(my_spaceship) != DockStyle::None && sf::length(dock_object->getPosition() - my_spaceship->getPosition()) < 1000.0f + dock_object->getRadius())
         // This doesn't make any difference in our fork because target_spaceship is always player_spaceship,

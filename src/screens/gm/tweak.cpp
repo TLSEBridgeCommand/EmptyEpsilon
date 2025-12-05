@@ -15,6 +15,8 @@
 #include "gui/gui2_togglebutton.h"
 #include "gui/gui2_button.h"
 #include "gui/gui2_progressbar.h"
+#include "gui/gui2_advancedscrolltext.h"
+#include "scienceDatabase.h"
 
 GuiObjectTweak::GuiObjectTweak(GuiContainer* owner, ETweakType tweak_type)
 : GuiPanel(owner, "GM_TWEAK_DIALOG")
@@ -78,6 +80,8 @@ GuiObjectTweak::GuiObjectTweak(GuiContainer* owner, ETweakType tweak_type)
         list->addEntry(tr("tab", "Player 2"), "");
         pages.push_back(new GuiShipTweakMessages(this));
         list->addEntry(tr("tab", "Messages"), "");
+        pages.push_back(new GuiShipTweakRelayLogs(this));
+        list->addEntry(tr("tab", "Relay logs"), "");
     }
 
     for(GuiTweakPage* page : pages)
@@ -1162,36 +1166,66 @@ GuiShipTweakMessages::GuiShipTweakMessages(GuiContainer* owner)
     message_entry = new GuiTextEntry(this, "", "");
     message_entry->setSize(550, 50);
     message_entry->setPosition(50, 70, ATopLeft);
-    message_entry->callback([this](string text) {
-        message = text;
-    });
 
     message_delete = new GuiButton(this, "", "", [this]() {
-        message_entry -> setText("");
-        message = "";
+        message_entry->setText("");
+        message.clear();
     });
     message_delete->setPosition(-25, 70, ATopRight)->setSize(50, 50);
     message_delete->setIcon("gui/icons/self-destruct");
-    
+
     // Choose the target
-    (new GuiLabel(this, "", tr("message", "Target:"), 30))->setSize(100, 40)->setPosition(50, 130, ATopLeft);
-    GuiSelector* target_selector = new GuiSelector(this, "", [this](int index, string value)
+    (new GuiLabel(this, "", tr("message", "Target:"), 30))
+        ->setSize(100, 40)->setPosition(50, 130, ATopLeft);
+
+    GuiSelector* target_selector = new GuiSelector(
+    this,
+    "",
+    [this](int index, string value)
     {
-    });
+        if (value == "this")
+        {
+            target = base_target;
+        }
+        else if (value == "all" || value == "all players")
+        {
+            target = base_target;
+        }
+        else
+        {
+            int idx = std::atoi(value.c_str());
+            if (idx >= 0 && idx < GameGlobalInfo::max_player_ships)
+            {
+                P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(idx);
+                if (ship)
+                    target = ship;
+            }
+        }
+        if (!send_local_button)
+            return;
+
+        bool not_all = (value != "all" && value != "all players");
+        bool has_message = !message.empty();
+
+        send_local_button->setEnable(not_all && has_message);
+    }
+);
     target_selector->setSize(300, 40)->setPosition(200, 130, ATopLeft);
-    target_selector->addEntry(tr("message", "this player"), "this player");
+    target_selector->addEntry(tr("message", "this player"), "this");
+    for (int n = 0; n < GameGlobalInfo::max_player_ships; ++n)
+    {
+        P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
+        if (!ship)
+            continue;
+
+        string label = ship->callsign;
+        if (label.empty())
+            label = tr("Player ship {id}").format({{"id", string(n + 1)}});
+
+        target_selector->addEntry(label, std::to_string(n));
+    }
     target_selector->addEntry(tr("message", "all players"), "all players");
     target_selector->setSelectionIndex(0);
-    
-    // Choose the screen
-    (new GuiLabel(this, "", tr("message", "Screen:"), 30))->setSize(100, 40)->setPosition(50, 170, ATopLeft);
-    GuiSelector* screen_selector = new GuiSelector(this, "", [this](int index, string value)
-    {
-    });
-    screen_selector->setSize(300, 40)->setPosition(200, 170, ATopLeft);
-    for(int n = 0; n < max_crew_positions; n++)
-        screen_selector->addEntry(getCrewPositionName(ECrewPosition(n)), getCrewPositionName(ECrewPosition(n)));
-    screen_selector->setSelectionIndex(0);
 
     // Add two columns.
     GuiAutoLayout* left_col = new GuiAutoLayout(this, "LEFT_LAYOUT", GuiAutoLayout::LayoutVerticalTopToBottom);
@@ -1201,7 +1235,24 @@ GuiShipTweakMessages::GuiShipTweakMessages(GuiContainer* owner)
     right_col->setPosition(-25, 200, ATopRight)->setSize(300, GuiElement::GuiSizeMax);
 
     // Left column
-    (new GuiLabel(left_col, "", tr("message", "into log"), 30))->setSize(GuiElement::GuiSizeMax, 100);
+    (new GuiLabel(left_col, "", tr("message", "into log"), 30))->setSize(GuiElement::GuiSizeMax, 70);
+
+    (new GuiLabel(left_col, "", tr("message", "Screen:"), 20))->setSize(GuiElement::GuiSizeMax, 30);
+
+    GuiSelector* log_screen_selector = new GuiSelector(left_col, "", [this](int index, string value)
+    {
+        // no-op; selection used when sending
+    });
+    log_screen_selector->setSize(GuiElement::GuiSizeMax, 40);
+
+    for (int n = 0; n < 5 && n < max_crew_positions; ++n)
+    {
+        log_screen_selector->addEntry(
+            getCrewPositionName(ECrewPosition(n)),
+            getCrewPositionName(ECrewPosition(n))
+        );
+    }
+    log_screen_selector->setSelectionIndex(0);
 
     // Choose the color
     GuiSelector* color_selector = new GuiSelector(left_col, "", [this](int index, string value)
@@ -1209,19 +1260,19 @@ GuiShipTweakMessages::GuiShipTweakMessages(GuiContainer* owner)
         color_message = sf::Color::White;
         if (value == "white")
             color_message = sf::Color::White;
-        if (value == "black")
+        else if (value == "black")
             color_message = sf::Color::Black;
-        if (value == "red")
+        else if (value == "red")
             color_message = sf::Color::Red;
-        if (value == "green")
+        else if (value == "green")
             color_message = sf::Color::Green;
-        if (value == "blue")
+        else if (value == "blue")
             color_message = sf::Color::Blue;
-        if (value == "yellow")
+        else if (value == "yellow")
             color_message = sf::Color::Yellow;
-        if (value == "magenta")
+        else if (value == "magenta")
             color_message = sf::Color::Magenta;
-        if (value == "cyan")
+        else if (value == "cyan")
             color_message = sf::Color::Cyan;
     });
     color_selector->setSize(GuiElement::GuiSizeMax, 40);
@@ -1235,59 +1286,235 @@ GuiShipTweakMessages::GuiShipTweakMessages(GuiContainer* owner)
     color_selector->addEntry(tr("message", "cyan"), "cyan");
     color_selector->setSelectionIndex(0);
 
-    // Send the message
-    send_message_log = new GuiButton(left_col, "", tr("message", "Send message"), [this, target_selector, screen_selector]() {
-        if (target_selector->getSelectionValue() == "all players")
+    send_message_log = new GuiButton(
+        left_col,
+        "",
+        tr("message", "Send message"),
+        [this, target_selector, log_screen_selector]()
         {
-            for(int n=0; n<GameGlobalInfo::max_player_ships; n++)
-            {
-                P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
-                if (ship)
-                    ship -> addToShipLog(message,color_message,ECrewPosition(screen_selector->getSelectionIndex()));
-            }
-        }
-        else
-            target -> addToShipLog(message,color_message,ECrewPosition(screen_selector->getSelectionIndex()));
-    });
-    send_message_log->setSize(GuiElement::GuiSizeMax, 40);
+            if (!target)
+                return;
 
-    // Right column
-    (new GuiLabel(right_col, "", tr("message", "On screen"), 30))->setSize(GuiElement::GuiSizeMax, 100);
-
-    (new GuiButton(right_col, "", tr("message", "Send message"), [this, target_selector, screen_selector]() {
-        if (target_selector->getSelectionValue() == "all players")
-        {
-            for(int n=0; n<GameGlobalInfo::max_player_ships; n++)
+            if (target_selector->getSelectionValue() == "all players")
             {
-                P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
-                if (ship)
-                    ship->addCustomMessage(ECrewPosition(screen_selector->getSelectionIndex()), getCrewPositionName(ECrewPosition(screen_selector->getSelectionIndex())) + "_message", message);
-            }
-        }
-        else
-            target->addCustomMessage(ECrewPosition(screen_selector->getSelectionIndex()), getCrewPositionName(ECrewPosition(screen_selector->getSelectionIndex())) + "_message", message);
-    }))->setSize(GuiElement::GuiSizeMax, 40);
-
-    (new GuiButton(right_col, "", tr("message", "Remove previous messages"), [this, target_selector, screen_selector]() {
-        if (target_selector->getSelectionValue() == "all players")
-        {
-            for(int n=0; n<GameGlobalInfo::max_player_ships; n++)
-            {
-                P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
-                if (ship)
+                for (int n = 0; n < GameGlobalInfo::max_player_ships; n++)
                 {
-                    for(int n = 0; n < max_crew_positions; n++)
-                        ship->removeCustom(getCrewPositionName(ECrewPosition(n)) + "_message");
+                    P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
+                    if (ship)
+                        ship->addToShipLog(
+                            message,
+                            color_message,
+                            ECrewPosition(log_screen_selector->getSelectionIndex())
+                        );
                 }
             }
+            else
+            {
+                target->addToShipLog(
+                    message,
+                    color_message,
+                    ECrewPosition(log_screen_selector->getSelectionIndex())
+                );
+            }
         }
-        else
-        {
-            for(int n = 0; n < max_crew_positions; n++)
-                target->removeCustom(getCrewPositionName(ECrewPosition(n)) + "_message");
-        }
-    }))->setSize(GuiElement::GuiSizeMax, 40);
+    );
+    send_message_log->setSize(GuiElement::GuiSizeMax, 40);
+    send_message_log->setEnable(false);
 
+    // Right column
+    (new GuiLabel(right_col, "", tr("message", "On screen"), 30))->setSize(GuiElement::GuiSizeMax, 70);
+
+    // NEW: screen selector for ON-SCREEN messages
+    (new GuiLabel(right_col, "", tr("message", "Screen:"), 20))
+        ->setSize(GuiElement::GuiSizeMax, 30);
+
+    GuiSelector* screen_selector = new GuiSelector(right_col, "", [this](int index, string value)
+    {
+        // no-op; selection used when sending
+    });
+    screen_selector->setSize(GuiElement::GuiSizeMax, 40);
+
+    for (int n = 0; n < max_crew_positions; ++n)
+    {
+        screen_selector->addEntry(
+            getCrewPositionName(ECrewPosition(n)),
+            getCrewPositionName(ECrewPosition(n))
+        );
+    }
+    screen_selector->setSelectionIndex(0);
+
+    send_screen_button = new GuiButton(
+        right_col,
+        "",
+        tr("message", "Send message"),
+        [this, target_selector, screen_selector]()
+        {
+            if (!target)
+                return;
+
+            ECrewPosition pos = ECrewPosition(screen_selector->getSelectionIndex());
+            std::string key = getCrewPositionName(pos) + "_message";
+
+            if (target_selector->getSelectionValue() == "all players")
+            {
+                for (int n = 0; n < GameGlobalInfo::max_player_ships; n++)
+                {
+                    P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
+                    if (ship)
+                        ship->addCustomMessage(pos, key, message);
+                }
+            }
+            else
+            {
+                target->addCustomMessage(pos, key, message);
+            }
+        }
+    );
+    send_screen_button->setSize(GuiElement::GuiSizeMax, 40);
+    send_screen_button->setEnable(false);
+
+    (new GuiButton(
+        right_col,
+        "",
+        tr("message", "Remove previous messages"),
+        [this, target_selector]()
+        {
+            if (target_selector->getSelectionValue() == "all players")
+            {
+                for (int n = 0; n < GameGlobalInfo::max_player_ships; n++)
+                {
+                    P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
+                    if (!ship)
+                        continue;
+
+                    for (int m = 0; m < max_crew_positions; m++)
+                        ship->removeCustom(
+                            getCrewPositionName(ECrewPosition(m)) + "_message"
+                        );
+                }
+            }
+            else if (target)
+            {
+                for (int m = 0; m < max_crew_positions; m++)
+                    target->removeCustom(
+                        getCrewPositionName(ECrewPosition(m)) + "_message"
+                    );
+            }
+        }
+    ))->setSize(GuiElement::GuiSizeMax, 40);
+
+    // --- To database ---
+    (new GuiLabel(left_col, "", "", 20))
+        ->setSize(GuiElement::GuiSizeMax, 40);
+    (new GuiLabel(left_col, "DB_LABEL", tr("message", "To database"), 30))
+        ->setSize(GuiElement::GuiSizeMax, 70);
+
+    (new GuiLabel(left_col, "DB_TITLE_LABEL", tr("message", "Entry title:"), 20))
+        ->setSize(GuiElement::GuiSizeMax, 30);
+
+    db_title_entry = new GuiTextEntry(left_col, "DB_TITLE_ENTRY", "");
+    db_title_entry->setSize(GuiElement::GuiSizeMax, 40);
+
+    send_to_db_button = new GuiButton(
+        left_col,
+        "DB_SEND",
+        tr("message", "Send to database"),
+        std::bind(&GuiShipTweakMessages::onSendToDatabase, this)
+    );
+    send_to_db_button->setSize(GuiElement::GuiSizeMax, 40);
+    send_to_db_button->setEnable(false);
+
+    db_title_entry->callback([this](string text) {
+    });
+
+    // --- To main screen (local message per ship) ---
+    (new GuiLabel(right_col, "", "", 20))
+        ->setSize(GuiElement::GuiSizeMax, 40);
+    (new GuiLabel(right_col, "", tr("message", "To main screen"), 30))
+        ->setSize(GuiElement::GuiSizeMax, 40);
+
+    send_local_button = new GuiButton(
+        right_col,
+        "SEND_LOCAL_MESSAGE",
+        tr("message", "Send message"),
+        [this, target_selector]()
+        {
+            if (message.empty())
+                return;
+
+            std::string value = target_selector->getSelectionValue();
+            bool not_all = (value != "all" && value != "all players");
+
+            if (!not_all)
+                return;
+
+            P<PlayerSpaceship> ship = target;
+            if (!ship)
+                return;
+
+            ship->localMessage(message);
+        }
+    );
+    send_local_button->setSize(GuiElement::GuiSizeMax, 40);
+    send_local_button->setEnable(false);
+
+    // --- Message entry callback: central enable/disable logic ---
+    message_entry->callback(
+        [this, target_selector](string text)
+        {
+            message = text;
+            bool has_message = !message.empty();
+
+            if (send_message_log)
+                send_message_log->setEnable(has_message);
+
+            if (send_to_db_button)
+                send_to_db_button->setEnable(has_message);
+
+            if (send_screen_button)
+                send_screen_button->setEnable(has_message);
+
+            if (send_local_button)
+            {
+                std::string value = target_selector->getSelectionValue();
+                bool not_all = (value != "all" && value != "all players");
+                send_local_button->setEnable(has_message && not_all);
+            }
+        }
+    );
+}
+
+void GuiShipTweakMessages::onSendToDatabase()
+{
+    if (!target)
+        return;
+
+    string title = db_title_entry->getText();
+    if (title.empty())
+        return;
+
+    if (message.empty())
+        return;
+
+    P<ScienceDatabase> root = ScienceDatabase::queryScienceDatabase("Additional Information", 0);
+    if (!root)
+    {
+        root = new ScienceDatabase();
+        root->setName("Additional Information");
+    }
+
+    P<ScienceDatabase> entry = ScienceDatabase::queryScienceDatabase(title, root->getId());
+    if (!entry)
+        entry = root->addEntry(title);
+
+    string old_text = entry->getLongDescription();
+    if (!old_text.empty())
+        old_text += "\n\n";
+
+    old_text += message;
+    entry->setLongDescription(old_text);
+    message.clear();
+    message_entry->setText("");
 }
 
 void GuiShipTweakMessages::onDraw(sf::RenderTarget& window)
@@ -1299,9 +1526,131 @@ void GuiShipTweakMessages::open(P<SpaceObject> target)
 {
     P<PlayerSpaceship> player = target;
     this->target = player;
-
+    this->base_target = player;
     if (player)
     {
+    }
+}
+
+GuiShipTweakRelayLogs::GuiShipTweakRelayLogs(GuiContainer* owner): GuiTweakPage(owner), ship_selector(nullptr), log_text(nullptr), initialized(false), current_index(-1)
+{
+    (new GuiLabel(this, "", tr("ship"), 30))
+        ->setPosition(50, 25, ATopLeft)
+        ->setSize(600, 40);
+    ship_selector = new GuiSelector(this, "RELAY_SHIP_SELECTOR",
+        [this](int index, string)
+    {
+        current_index = index;
+        if (log_text)
+            log_text->clearEntries();
+    });
+    ship_selector->setPosition(50, 65, ATopLeft);
+    ship_selector->setSize(600, 40);
+    log_text = new GuiAdvancedScrollText(this, "RELAY_SHIP_LOG");
+    log_text->enableAutoScrollDown();
+    log_text->setPosition(50, 155, ATopLeft);
+    log_text->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+}
+
+void GuiShipTweakRelayLogs::open(P<SpaceObject> target)
+{
+    if (!initialized)
+    {
+        ship_slots.clear();
+        for (int n = 0; n < GameGlobalInfo::max_player_ships; ++n)
+        {
+            P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
+            if (!ship)
+                continue;
+
+            ship_slots.push_back(n);
+
+            string label = ship->callsign;
+            if (label.empty())
+                label = tr("Player ship {id}").format({{"id", string(n + 1)}});
+
+            ship_selector->addEntry(label, "");
+        }
+
+        initialized = true;
+    }
+
+    int default_index = -1;
+    P<PlayerSpaceship> target_player = target;
+    if (target_player)
+    {
+        for (int i = 0; i < int(ship_slots.size()); ++i)
+        {
+            int slot = ship_slots[i];
+            if (gameGlobalInfo->getPlayerShip(slot) == target_player)
+            {
+                default_index = i;
+                break;
+            }
+        }
+    }
+
+    if (default_index < 0 && !ship_slots.empty())
+        default_index = 0;
+
+    if (default_index >= 0 && default_index < int(ship_slots.size()))
+    {
+        ship_selector->setSelectionIndex(default_index);
+        current_index = default_index;
+        if (log_text)
+            log_text->clearEntries();
+    }
+}
+
+void GuiShipTweakRelayLogs::onDraw(sf::RenderTarget& window)
+{
+    if (!log_text)
+        return;
+
+    if (current_index < 0 || current_index >= int(ship_slots.size()))
+        return;
+
+    int slot = ship_slots[current_index];
+    P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(slot);
+    if (!ship)
+        return;
+
+    std::vector<PlayerSpaceship::ShipLogEntry>& logs =
+        ship->getShipsLog(relayOfficer);
+    if (log_text->getEntryCount() > 0 && logs.size() == 0)
+        log_text->clearEntries();
+
+    while (log_text->getEntryCount() > logs.size())
+    {
+        log_text->removeEntry(0);
+    }
+    if (log_text->getEntryCount() > 0 && logs.size() > 0 &&
+        log_text->getEntryText(0) != logs[0].text)
+    {
+        bool updated = false;
+        for (unsigned int n = 1; n < log_text->getEntryCount(); n++)
+        {
+            if (log_text->getEntryText(n) == logs[0].text)
+            {
+                for (unsigned int m = 0; m < n; m++)
+                    log_text->removeEntry(0);
+                updated = true;
+                break;
+            }
+        }
+        if (!updated)
+            log_text->clearEntries();
+    }
+
+    while (log_text->getEntryCount() < logs.size())
+    {
+        int n = log_text->getEntryCount();
+
+        // Same station label behaviour as ShipLogScreen
+        if (gameGlobalInfo->logs_by_station && logs[n].position != max_crew_positions)
+            logs[n].prefix = logs[n].prefix + "\t[" + getCrewPositionName(logs[n].position) + "]\t";
+
+        log_text->addEntry(logs[n].prefix, logs[n].text, logs[n].color);
     }
 }
 

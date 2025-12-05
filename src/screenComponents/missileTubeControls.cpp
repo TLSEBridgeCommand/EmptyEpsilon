@@ -40,6 +40,10 @@ GuiMissileTubeControls::GuiMissileTubeControls(GuiContainer* owner, string id, P
         row.fire_button = new GuiButton(row.layout, id + "_" + string(n) + "_FIRE_BUTTON", tr("missile","Fire"), [this, n]() {
             if (!target_spaceship)
                 return;
+            if (target_spaceship->weapon_tube[n].isLoading()  || target_spaceship->weapon_tube[n].isUnloading()|| target_spaceship->weapon_tube[n].isFiring())
+            {
+                return;
+            }
             if (target_spaceship->weapon_tube[n].isLoaded())
             {
                 float target_angle = missile_target_angle;

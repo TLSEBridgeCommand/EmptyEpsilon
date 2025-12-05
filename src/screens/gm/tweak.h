@@ -17,6 +17,10 @@ class GuiSelector;
 class GuiToggleButton;
 class GuiButton;
 class GuiProgressbar;
+class GuiListbox;
+class GuiSelector;
+class GuiAdvancedScrollText;
+class PlayerSpaceship;
 
 enum ETweakType
 {
@@ -283,7 +287,12 @@ private:
     GuiButton* message_delete;
     GuiButton* send_message_log;
     GuiToggleButton* message_all_toggle;
-
+    GuiTextEntry* db_title_entry;
+    GuiButton*    send_to_db_button;
+    GuiButton*    send_screen_button;
+    void onSendToDatabase();
+    GuiButton* send_local_button;
+    P<PlayerSpaceship> base_target;
 public:
     GuiShipTweakMessages(GuiContainer* owner);
 
@@ -333,6 +342,22 @@ public:
     virtual void open(P<SpaceObject> target);
 
     virtual void onDraw(sf::RenderTarget& window) override;
+};
+
+class GuiShipTweakRelayLogs : public GuiTweakPage
+{
+public:
+    GuiShipTweakRelayLogs(GuiContainer* owner);
+
+    virtual void onDraw(sf::RenderTarget& window);
+    virtual void open(P<SpaceObject> target);
+
+private:
+    GuiSelector* ship_selector;
+    GuiAdvancedScrollText* log_text;
+    std::vector<int> ship_slots; 
+    bool initialized;
+    int current_index;
 };
 
 #endif//TWEAK_H

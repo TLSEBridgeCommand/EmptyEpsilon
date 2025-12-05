@@ -424,9 +424,9 @@ void GuiRadarView::drawNebulaBlockedAreas(sf::RenderTarget& window)
         sf::Vector2f diff = n->getPosition() - scan_center;
         float diff_len = sf::length(diff);
 
-        if (diff_len < n->getRadius() + getDistance())
+        if (diff_len < n->getEffectRadius() + getDistance())
         {
-            if (diff_len < n->getRadius())
+            if (diff_len < n->getEffectRadius())
             {
                 sf::RectangleShape background(sf::Vector2f(rect.width, rect.height));
                 background.setPosition(rect.left, rect.top);

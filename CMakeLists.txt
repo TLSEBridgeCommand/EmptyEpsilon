@@ -246,6 +246,7 @@ set(SOURCES
 	src/screenComponents/impulseSound.cpp
 	src/screenComponents/systemEffectsList.cpp
 	src/screenComponents/tractorBeamControl.cpp
+	src/screenComponents/localMessage.cpp
 	src/gui/colorConfig.cpp
 	src/gui/hotkeyConfig.cpp
 	src/gui/joystickConfig.cpp

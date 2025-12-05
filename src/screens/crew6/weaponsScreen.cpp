@@ -72,7 +72,7 @@ WeaponsScreen::WeaponsScreen(GuiContainer* owner)
         lock_fire->setVisible(is_visible);
     }
     
-    if (gameGlobalInfo->use_beam_shield_frequencies || gameGlobalInfo->use_system_damage)
+    if ((gameGlobalInfo->use_beam_shield_frequencies && my_spaceship->getBeamsButtonStation() == PreferencesManager::get("weapons_specific_station", "0").toInt())|| (gameGlobalInfo->use_system_damage && my_spaceship->getBeamsButtonStation() == PreferencesManager::get("weapons_specific_station", "0").toInt()))
     {
         GuiElement* beam_info_box = new GuiElement(this, "BEAM_INFO_BOX");
         beam_info_box->setPosition(-20, -200, ABottomRight)->setSize(280, 150);

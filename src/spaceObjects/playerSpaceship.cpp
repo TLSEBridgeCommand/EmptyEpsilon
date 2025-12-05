@@ -25,6 +25,10 @@ REGISTER_SCRIPT_SUBCLASS(PlayerSpaceship, SpaceShip)
     /// Adds a message to the ship's log. Takes a string as the message and a
     /// sf::Color.
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, addToShipLog);
+    /// adds a local message on radars and main screen. Take two parameters: message (str) and time (in seconds)
+    // eg. player:localMessage("Game over", 12)
+    // time can be ommited; defaults to 10 seconds
+    REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, localMessage);
     /// Move all players connected to this ship to the same stations on a
     /// different PlayerSpaceship. If the target isn't a PlayerSpaceship, this
     /// function does nothing.
@@ -39,7 +43,7 @@ REGISTER_SCRIPT_SUBCLASS(PlayerSpaceship, SpaceShip)
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, setTexture);
     /// Set background textures color for the player
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, setTextureColor);
-
+    REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, clearShipLogs);
     // Comms functions return Boolean values if true.
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, isCommsInactive);
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, isCommsOpening);
@@ -348,6 +352,9 @@ PlayerSpaceship::PlayerSpaceship()
 : SpaceShip("PlayerSpaceship", 5000)
 {
     // Initialize ship settings
+    local_message = "";
+    local_message_timeout = 0.0f;
+
     main_screen_setting = MSS_Front;
     main_screen_overlay = MSO_HideComms;
     texture_front = "StarsFront";
@@ -399,6 +406,8 @@ PlayerSpaceship::PlayerSpaceship()
         setScannedStateForFaction(faction_id, SS_FullScan);
 
     updateMemberReplicationUpdateDelay(&target_rotation, 0.1);
+    registerMemberReplication(&local_message);
+    registerMemberReplication(&local_message_timeout);
     registerMemberReplication(&can_scan);
     registerMemberReplication(&can_hack);
     registerMemberReplication(&can_dock);
@@ -552,6 +561,18 @@ void PlayerSpaceship::update(float delta)
     // If we're jumping, tick the countdown timer.
     if (jump_indicator > 0)
         jump_indicator -= delta;
+
+    // local message timeout
+        if (local_message_timeout > 0.0f)
+    {
+        local_message_timeout -= delta;
+        if (local_message_timeout <= 0.0f)
+        {
+            local_message_timeout = 0.0f;
+            local_message.clear();
+        }
+    }
+
 
     // If shields are calibrating, tick the calibration delay. Factor shield
     // subsystem effectiveness when determining the tick rate.
@@ -1282,6 +1303,12 @@ std::vector<PlayerSpaceship::ShipLogEntry>& PlayerSpaceship::getShipsLog(ECrewPo
     return sub_log;
 }
 
+void PlayerSpaceship::clearShipLogs()
+{
+    ships_log.clear();
+    sub_log.clear();
+}
+
 void PlayerSpaceship::transferPlayersToShip(P<PlayerSpaceship> other_ship)
 {
     // Don't do anything without a valid target. The target must be a
@@ -1600,7 +1627,7 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
             if (tube_nr >= 0 && tube_nr < max_weapon_tubes)
             {
                 weapon_tube[tube_nr].fire(missile_target_angle);
-                addToShipLog(tr("Missile fire"),sf::Color::Yellow,engineering);
+                addToShipLog(tr("Missile fire"),sf::Color::Yellow,weaponsOfficer);
             }
         }
         break;
@@ -1615,12 +1642,12 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
                 if (active)
                 {
                     playSoundOnMainScreen("shield_up.wav");
-                    addToShipLog(tr("Shields up"),sf::Color::Green,engineering);
+                    addToShipLog(tr("Shields up"),sf::Color::Yellow,weaponsOfficer);
                 }
                 else
                 {
                     playSoundOnMainScreen("shield_down.wav");
-                    addToShipLog(tr("Shields down"),sf::Color::Green,engineering);
+                    addToShipLog(tr("Shields down"),sf::Color::Yellow,weaponsOfficer);
                 }
             }
         }
@@ -1634,9 +1661,9 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
             {
                 lock_fire = active;
                 if (active)
-                    addToShipLog(tr("Fire up"),sf::Color::Green,engineering);
+                    addToShipLog(tr("Fire up"),sf::Color::Yellow,weaponsOfficer);
                 else
-                    addToShipLog(tr("Fire down"),sf::Color::Green,engineering);
+                    addToShipLog(tr("Fire down"),sf::Color::Yellow,weaponsOfficer);
             }
         }
         break;     
@@ -1741,19 +1768,19 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
             int32_t id;
             packet >> id;
             requestDock(game_server->getObjectById(id));
-            addToShipLog(tr("Docking requested"),sf::Color::Cyan,engineering);
+            addToShipLog(tr("Docking requested"),sf::Color::Cyan,helmsOfficer);
         }
         break;
     case CMD_UNDOCK:
         {
             requestUndock();
-            addToShipLog(tr("Undocking requested"),sf::Color::Cyan,engineering);
+            addToShipLog(tr("Undocking requested"),sf::Color::Cyan,helmsOfficer);
         }
         break;
     case CMD_ABORT_DOCK:
         {
             abortDock();
-            addToShipLog(tr("Docking aborted"),sf::Color::Cyan,engineering);
+            addToShipLog(tr("Docking aborted"),sf::Color::Cyan,helmsOfficer);
         }
         break;
     case CMD_OPEN_TEXT_COMM:
@@ -2720,6 +2747,20 @@ string PlayerSpaceship::getExportLine()
 void PlayerSpaceship::onProbeLaunch(ScriptSimpleCallback callback)
 {
     this->on_probe_launch = callback;
+
+}
+void PlayerSpaceship::localMessage(string msg, float timeout)
+{
+    if (msg.empty())
+    {
+        local_message.clear();
+        local_message_timeout = 0.0f;
+    }
+    else
+    {
+        local_message = msg;
+        local_message_timeout = (timeout > 0.0f ? timeout : 10.0f);
+    }
 }
 
 #ifndef _MSC_VER

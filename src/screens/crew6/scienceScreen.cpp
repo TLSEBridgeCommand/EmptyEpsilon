@@ -154,9 +154,9 @@ ScienceScreen::ScienceScreen(GuiContainer* owner, ECrewPosition crew_position)
 
     // Prep and hide the frequency graphs.
     info_shield_frequency = new GuiFrequencyCurve(info_sidebar, "SCIENCE_SHIELD_FREQUENCY", false, true);
-    info_shield_frequency->setSize(GuiElement::GuiSizeMax, 150);
+    info_shield_frequency->setSize(GuiElement::GuiSizeMax, 130);
     info_beam_frequency = new GuiFrequencyCurve(info_sidebar, "SCIENCE_BEAM_FREQUENCY", true, false);
-    info_beam_frequency->setSize(GuiElement::GuiSizeMax, 150);
+    info_beam_frequency->setSize(GuiElement::GuiSizeMax, 130);
 
     // Show shield and beam frequencies only if enabled by the server.
     if (!gameGlobalInfo->use_beam_shield_frequencies)

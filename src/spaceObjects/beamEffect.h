@@ -14,6 +14,7 @@ class BeamEffect : public SpaceObject, public Updatable
     sf::Vector3f hitNormal;
 public:
     bool fire_ring;
+    bool played_sound;
     string beam_texture;
     string beam_fire_sound;
     float beam_fire_sound_power;

@@ -19,6 +19,7 @@
 
 #include "gui/gui2_panel.h"
 #include "gui/gui2_overlay.h"
+#include "screenComponents/localMessage.h"
 
 ScreenMainScreen::ScreenMainScreen()
 {
@@ -53,6 +54,7 @@ ScreenMainScreen::ScreenMainScreen()
     new GuiJumpIndicator(this);
     new GuiSelfDestructIndicator(this);
     new GuiGlobalMessage(this);
+    new GuiLocalMessage(this, my_spaceship);
     new GuiIndicatorOverlays(this);
 
     keyboard_help = new GuiHelpOverlay(this, "Keyboard Shortcuts");

@@ -74,7 +74,7 @@ public:
     float scanning_noise = 0.0f;
 
     constexpr static int16_t CMD_PLAY_CLIENT_SOUND = 0x0001;
-
+    
     // Content of a line in the ship's log
     class ShipLogEntry
     {
@@ -411,6 +411,7 @@ public:
     void addToShipLog(string message, sf::Color color, ECrewPosition position = relayOfficer);
     void addToShipLogBy(string message, P<SpaceObject> target);
     std::vector<ShipLogEntry>& getShipsLog(ECrewPosition position);
+    void clearShipLogs();
 
     // Ship's crew functions
     void transferPlayersToShip(P<PlayerSpaceship> other_ship);
@@ -441,6 +442,10 @@ public:
 
     // Script export function
     virtual string getExportLine() override;
+    string local_message;
+    float  local_message_timeout = 0.0f;
+
+    void localMessage(string msg, float timeout = 10.0f);
 };
 REGISTER_MULTIPLAYER_ENUM(ECommsState);
 template<> int convert<EAlertLevel>::returnType(lua_State* L, EAlertLevel l);

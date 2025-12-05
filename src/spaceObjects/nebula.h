@@ -17,8 +17,14 @@ class Nebula : public SpaceObject
 
     int radar_visual;
     NebulaCloud clouds[cloud_count];
+
+    float effect_radius = 5000.f; 
 public:
     Nebula();
+    P<Nebula> setEffectRadius(float r);
+    float getEffectRadius() const { return effect_radius; }
+    P<Nebula> setTexture(string texture_name);
+    std::string custom_texture;
 
 #if FEATURE_3D_RENDERING
     virtual void draw3DTransparent();

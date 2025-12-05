@@ -25,6 +25,7 @@ BeamEffect::BeamEffect()
     setRadarSignatureInfo(0.0, 0.3, 0.0);
     setCollisionRadius(1.0);
     lifetime = 1.0;
+    this->played_sound = false;
     sourceId = -1;
     target_id = -1;
     beam_texture = "beam_orange.png";
@@ -125,11 +126,17 @@ void BeamEffect::update(float delta)
     if (target)
         targetLocation = target->getPosition() + sf::Vector2f(targetOffset.x, targetOffset.y);
 
-    if (source && delta > 0 && lifetime == 1.0)
+    float prev_lifetime = lifetime + delta; 
+    bool crossed_start  = (prev_lifetime > 0.98f && lifetime <= 0.98f);
+    bool retry_window   = (lifetime > 0.85f);
+    if (source && !played_sound &&(crossed_start || retry_window))
     {
         float volume = 50.0f + (beam_fire_sound_power * 75.0f);
         float pitch = (1.0f / beam_fire_sound_power) + random(-0.1f, 0.1f);
-        soundManager->playSound(beam_fire_sound, source->getPosition(), 200.0, 1.0, pitch, volume);
+        int handle = soundManager->playSound(beam_fire_sound, source->getPosition(), 200.0f, 1.0f, pitch, volume);
+        if (handle >= 0) {
+            played_sound = true;                  
+        }
     }
 
     lifetime -= delta;

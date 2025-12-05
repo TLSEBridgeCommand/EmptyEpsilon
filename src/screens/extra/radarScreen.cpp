@@ -13,6 +13,7 @@
 #include "screenComponents/radarView.h"
 #include "screenComponents/alertOverlay.h"
 #include "gui/gui2_overlay.h"
+#include "screenComponents/localMessage.h"
 
 RadarScreen::RadarScreen(GuiContainer* owner, string type)
 : GuiOverlay(owner, "RADAR_SCREEN", colorConfig.background), type(type)
@@ -42,6 +43,7 @@ RadarScreen::RadarScreen(GuiContainer* owner, string type)
     new GuiJumpIndicator(this);
     new GuiSelfDestructIndicator(this);
     new GuiGlobalMessage(this);
+    new GuiLocalMessage(this, my_spaceship);  
     new GuiIndicatorOverlays(this);
 }
 
