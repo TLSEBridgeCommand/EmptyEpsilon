@@ -69,6 +69,7 @@ private:
     bool show_target_projection;
     bool show_missile_tubes;
     bool show_callsigns;
+    bool show_gm_callsigns;
     bool show_heading_indicators;
     bool show_game_master_data;
     float range_indicator_step_size;
@@ -103,6 +104,11 @@ public:
     GuiRadarView* disableCallsigns() { show_callsigns = false; return this; }
     GuiRadarView* showCallsigns(bool value) { show_callsigns = value; return this; }
     bool getCallsigns() { return show_callsigns; }
+    
+    GuiRadarView* enableGMCallsigns() { show_gm_callsigns = true; return this; }
+    GuiRadarView* disableGMCallsigns() { show_gm_callsigns = false; return this; }
+    GuiRadarView* showGMCallsigns(bool value) { show_gm_callsigns = value; return this; }
+    bool getGMCallsigns() { return show_gm_callsigns; }
     GuiRadarView* enableHeadingIndicators() { show_heading_indicators = true; return this; }
     GuiRadarView* disableHeadingIndicators() { show_heading_indicators = false; return this; }
     GuiRadarView* gameMaster() { show_game_master_data = true; return this; }

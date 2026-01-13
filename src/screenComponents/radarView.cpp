@@ -29,6 +29,7 @@ GuiRadarView::GuiRadarView(GuiContainer* owner, string id, TargetsContainer* tar
     show_target_projection(false),
     show_missile_tubes(false),
     show_callsigns(false),
+    show_gm_callsigns(false),
     show_heading_indicators(false),
     show_game_master_data(false),
     range_indicator_step_size(0.0f),
@@ -70,6 +71,7 @@ GuiRadarView::GuiRadarView(GuiContainer* owner, string id, float distance, Targe
     show_target_projection(false),
     show_missile_tubes(false),
     show_callsigns(false),
+    show_gm_callsigns(false),
     show_heading_indicators(false),
     show_game_master_data(false),
     range_indicator_step_size(0.0f),
@@ -762,6 +764,8 @@ void GuiRadarView::drawObjectsGM(sf::RenderTarget& window)
         if (rect.intersects(object_rect))
         {
             obj->drawOnGMRadar(window, object_position_on_screen, scale, view_rotation, long_range);
+            if (show_gm_callsigns && obj->getCallSign() != "")
+                drawText(window, sf::FloatRect(object_position_on_screen.x, object_position_on_screen.y - 15, 0, 0), obj->getCallSign(), ACenter, 15, bold_font);
         }
     }
 }

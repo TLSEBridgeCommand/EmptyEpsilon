@@ -521,6 +521,9 @@ void GameMasterScreen::onKey(sf::Event::KeyEvent key, int unicode)
         else
             gameMasterActions->commandSetGameSpeed(0.0f);
         break;
+    case sf::Keyboard::C:
+        main_radar->showGMCallsigns(!main_radar->getGMCallsigns());
+        break;
     default:
         break;
     }
