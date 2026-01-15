@@ -21,8 +21,10 @@ private:
     {
         TargetSelection,
         WaypointPlacement,
+        RoutePlacement,
         LaunchProbe,
-        MoveWaypoint
+        MoveWaypoint,
+        MoveRoute
     };
 
     EMode mode;
@@ -37,12 +39,16 @@ private:
     GuiKeyValueDisplay* info_faction;
 
     GuiAutoLayout* option_buttons;
+    GuiAutoLayout* placement_buttons;
     GuiButton* hack_target_button;
     GuiToggleButton* link_to_science_button;
     GuiSelector* route_selector;
+    GuiSelector* placement_route_selector;
     GuiSelector* layer_selector;
     GuiButton* delete_waypoint_button;
+    GuiButton* delete_route_button;
     GuiButton* launch_probe_button;
+    GuiToggleButton* center_button;
 
     GuiToggleButton* alert_level_button;
     std::vector<GuiButton*> alert_level_buttons;

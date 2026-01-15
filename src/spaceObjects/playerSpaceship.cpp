@@ -130,6 +130,9 @@ REGISTER_SCRIPT_SUBCLASS(PlayerSpaceship, SpaceShip)
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandAddWaypoint);
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandRemoveWaypoint);
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandMoveWaypoint);
+    REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandAddRoute);
+    REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandRemoveRoute);
+    REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandMoveRoute);
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandActivateSelfDestruct);
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandCancelSelfDestruct);
     REGISTER_SCRIPT_CLASS_FUNCTION(PlayerSpaceship, commandConfirmDestructCode);
@@ -312,6 +315,9 @@ static const int16_t CMD_SET_TRACTOR_BEAM_ARC = 0x0036;
 static const int16_t CMD_SET_TRACTOR_BEAM_RANGE = 0x0037;
 static const int16_t CMD_SET_TRACTOR_BEAM_MODE = 0x0038;
 static const int16_t CMD_SET_WARP_FREQUENCY = 0x0039;
+static const int16_t CMD_ADD_ROUTE = 0x0040;
+static const int16_t CMD_REMOVE_ROUTE = 0x0041;
+static const int16_t CMD_MOVE_ROUTE = 0x0042;
 static const int16_t CMD_SET_ANALYSIS_LINK = 0x003A;
 static const int16_t CMD_SET_SYSTEM_POWER_PRESET = 0x003B;
 static const int16_t CMD_SET_SYSTEM_COOLANT_PRESET = 0x003C;
@@ -445,7 +451,9 @@ PlayerSpaceship::PlayerSpaceship()
     for(int r = 0; r < max_routes; r++) {
         for(int wp = 0; wp < max_waypoints_in_route; wp++) {
             waypoints[r][wp] = empty_waypoint;
+            routes[r][wp] = empty_waypoint;
             registerMemberReplication(&waypoints[r][wp]);
+            registerMemberReplication(&routes[r][wp]);
         }
     }
     registerMemberReplication(&scan_probe_stock);
@@ -1987,6 +1995,38 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
                 waypoints[route][index] = position;
         }
         break;
+    case CMD_ADD_ROUTE:
+        {
+            int route;
+            sf::Vector2f position;
+            packet >> route >> position;
+            for (int i = 0; i < max_waypoints_in_route; i++){
+                if (routes[route][i] >= empty_waypoint){
+                    routes[route][i] = position;
+                    break;
+                }
+            }
+        }
+        break;
+    case CMD_REMOVE_ROUTE:
+        {
+            int route;
+            int index;
+            packet >> route >> index;
+            if (index >= 0 && index < max_waypoints_in_route)
+                routes[route][index] = empty_waypoint;
+        }
+        break;
+    case CMD_MOVE_ROUTE:
+        {
+            int route;
+            int index;
+            sf::Vector2f position;
+            packet >> route >> index >> position;
+            if (index >= 0 && index < max_waypoints_in_route)
+                routes[route][index] = position;
+        }
+        break;
     case CMD_ACTIVATE_SELF_DESTRUCT:
         activate_self_destruct = true;
         addToShipLog(tr("Self Destruction procedure activated"),sf::Color::Red,engineering);
@@ -2467,6 +2507,27 @@ void PlayerSpaceship::commandMoveWaypoint(int index, sf::Vector2f position, int 
 {
     sf::Packet packet;
     packet << CMD_MOVE_WAYPOINT << route << index << position;
+    sendClientCommand(packet);
+}
+
+void PlayerSpaceship::commandAddRoute(sf::Vector2f position, int route)
+{
+    sf::Packet packet;
+    packet << CMD_ADD_ROUTE << route << position;
+    sendClientCommand(packet);
+}
+
+void PlayerSpaceship::commandRemoveRoute(int index, int route)
+{
+    sf::Packet packet;
+    packet << CMD_REMOVE_ROUTE << route << index;
+    sendClientCommand(packet);
+}
+
+void PlayerSpaceship::commandMoveRoute(int index, sf::Vector2f position, int route)
+{
+    sf::Packet packet;
+    packet << CMD_MOVE_ROUTE << route << index << position;
     sendClientCommand(packet);
 }
 

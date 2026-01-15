@@ -182,6 +182,8 @@ void GuiRadarView::onDraw(sf::RenderTarget& window)
     //Post masking
     if (show_waypoints)
         drawWaypoints(forground_texture);
+    if (show_routes)
+        drawRoutes(forground_texture);
     if (show_heading_indicators)
         drawHeadingIndicators(forground_texture);
     drawTargets(forground_texture);
@@ -495,11 +497,73 @@ void GuiRadarView::drawWaypoints(sf::RenderTarget& window)
     float scale = std::min(rect.width, rect.height) / 2.0f / getDistance();
     
     for(int r = 0; r < PlayerSpaceship::max_routes; r++){
-        for(int wp = 0; wp < PlayerSpaceship::max_waypoints_in_route; wp++){
+        // Draw waypoints (no lines between them)
+        for(int wp = PlayerSpaceship::max_waypoints_in_route - 1; wp >= 0; wp--){
             if (my_spaceship->waypoints[r][wp] < empty_waypoint){
                 sf::Vector2f screen_position = radar_screen_center + (my_spaceship->waypoints[r][wp] - getViewPosition()) * scale;
                 sf::Sprite object_sprite;
                 textureManager.setTexture(object_sprite, "waypoint");
+                object_sprite.setColor(routeColors[r]);
+                object_sprite.setPosition(screen_position - sf::Vector2f(0, 10));
+                object_sprite.setScale(0.8, 0.8);
+                window.draw(object_sprite);
+                drawText(window, sf::FloatRect(screen_position.x, screen_position.y - 10, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                
+                if (style != Rectangular && sf::length(screen_position - radar_screen_center) > std::min(rect.width, rect.height) * 0.5f)
+                {
+                    screen_position = radar_screen_center + ((screen_position - radar_screen_center) / sf::length(screen_position - radar_screen_center) * std::min(rect.width, rect.height) * 0.4f);
+
+                    object_sprite.setPosition(screen_position);
+                    object_sprite.setRotation(sf::vector2ToAngle(screen_position - radar_screen_center) - 90);
+                    window.draw(object_sprite);
+
+                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                }
+            }
+        }
+    }
+}
+
+void GuiRadarView::drawRoutes(sf::RenderTarget& window)
+{
+    if (!my_spaceship)
+        return;
+
+    sf::Vector2f radar_screen_center(rect.left + rect.width / 2.0f, rect.top + rect.height / 2.0f);
+    float scale = std::min(rect.width, rect.height) / 2.0f / getDistance();
+    
+    for(int r = 0; r < PlayerSpaceship::max_routes; r++){
+        // 1. Collect valid route positions for this route
+        std::vector<sf::Vector2f> positions;
+        for(int wp = 0; wp < PlayerSpaceship::max_waypoints_in_route; wp++){
+            if (my_spaceship->routes[r][wp] < empty_waypoint){
+                sf::Vector2f screen_position = radar_screen_center + (my_spaceship->routes[r][wp] - getViewPosition()) * scale;
+                positions.push_back(screen_position);
+            }
+        }
+        // 2. Draw dotted lines between consecutive route points
+        for (size_t i = 1; i < positions.size(); ++i) {
+            sf::Vector2f start = positions[i-1];
+            sf::Vector2f end = positions[i];
+            float length = sf::length(end - start);
+            if (length < 1.0f) continue;
+            sf::Vector2f dir = sf::normalize(end - start);
+            float dotSpacing = 12.0f; // pixels between dots
+            for (float d = 0; d < length; d += dotSpacing) {
+                sf::Vector2f dotPos = start + dir * d;
+                sf::CircleShape dot(2.0f); // radius 2px
+                dot.setFillColor(routeColors[r]);
+                dot.setOrigin(2.0f, 2.0f);
+                dot.setPosition(dotPos);
+                window.draw(dot);
+            }
+        }
+        // 3. Draw the route points and numbers (in reverse order, so first placed is on top)
+        for(int wp = PlayerSpaceship::max_waypoints_in_route - 1; wp >= 0; wp--){
+            if (my_spaceship->routes[r][wp] < empty_waypoint){
+                sf::Vector2f screen_position = radar_screen_center + (my_spaceship->routes[r][wp] - getViewPosition()) * scale;
+                sf::Sprite object_sprite;
+                textureManager.setTexture(object_sprite, "route_point");
                 object_sprite.setColor(routeColors[r]);
                 object_sprite.setPosition(screen_position - sf::Vector2f(0, 10));
                 object_sprite.setScale(0.8, 0.8);
@@ -792,6 +856,7 @@ void GuiRadarView::drawTargets(sf::RenderTarget& window)
     }
     
     if (my_spaceship){
+        // Handle waypoint selection reticule
         sf::Vector2f wp = empty_waypoint;
         if (targets->getRouteIndex() == -1){
             if (targets->getWaypointIndex() > -1 && targets->getWaypointIndex() < PlayerSpaceship::max_waypoints) {
@@ -804,6 +869,18 @@ void GuiRadarView::drawTargets(sf::RenderTarget& window)
         }
         if (wp < empty_waypoint){
             sf::Vector2f object_position_on_screen = getCenterPosition() + (wp - getViewPosition()) * getScale();
+            target_sprite.setPosition(object_position_on_screen - sf::Vector2f(0, 10));
+            window.draw(target_sprite);
+        }
+        
+        // Handle route selection reticule
+        sf::Vector2f rp = empty_waypoint;
+        if (targets->getSelectedRouteIndex() > -1 && targets->getSelectedRouteWaypointIndex() > -1 && 
+            targets->getSelectedRouteWaypointIndex() < PlayerSpaceship::max_waypoints_in_route) {
+            rp = my_spaceship->routes[targets->getSelectedRouteIndex()][targets->getSelectedRouteWaypointIndex()];
+        }
+        if (rp < empty_waypoint){
+            sf::Vector2f object_position_on_screen = getCenterPosition() + (rp - getViewPosition()) * getScale();
             target_sprite.setPosition(object_position_on_screen - sf::Vector2f(0, 10));
             window.draw(target_sprite);
         }

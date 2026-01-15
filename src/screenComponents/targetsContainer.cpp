@@ -7,11 +7,16 @@ TargetsContainer::TargetsContainer()
     route_selection_index = -1;
     waypoint_selection_index = -1;
     allow_waypoint_selection = false;
+    // Initialize new route selection variables
+    selected_route_index = -1;
+    selected_route_waypoint_index = -1;
 }
 
 void TargetsContainer::clear()
 {
     waypoint_selection_index = -1;
+    selected_route_index = -1;
+    selected_route_waypoint_index = -1;
     entries.clear();
 }
 
@@ -74,6 +79,7 @@ void TargetsContainer::setToClosestTo(sf::Vector2f position, float max_range, ES
 
     if (my_spaceship && allow_waypoint_selection)
     {
+        // First check for waypoint selection
         for(int r = 0; r < PlayerSpaceship::max_routes; r++)
         {
             for(int n=0; n<PlayerSpaceship::max_waypoints_in_route; n++)
@@ -87,6 +93,32 @@ void TargetsContainer::setToClosestTo(sf::Vector2f position, float max_range, ES
                         route_selection_index = r;
                         waypoint_selection_index = n;
                         waypoint_selection_position = wp;
+                        // Clear route selection when waypoint is selected
+                        selected_route_index = -1;
+                        selected_route_waypoint_index = -1;
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // Then check for route selection
+        for(int r = 0; r < PlayerSpaceship::max_routes; r++)
+        {
+            for(int n=0; n<PlayerSpaceship::max_waypoints_in_route; n++)
+            {
+                sf::Vector2f rp = my_spaceship->routes[r][n];
+                if (rp < empty_waypoint && (rp - position) < max_range)
+                {
+                    if (!target || sf::length(position - rp) < sf::length(position - target->getPosition()))
+                    {
+                        clear();
+                        selected_route_index = r;
+                        selected_route_waypoint_index = n;
+                        route_selection_position = rp;
+                        // Clear waypoint selection when route is selected
+                        route_selection_index = -1;
+                        waypoint_selection_index = -1;
                         return;
                     }
                 }
@@ -134,6 +166,53 @@ sf::Vector2f TargetsContainer::getWaypointPosition()
 {
     if (my_spaceship && waypoint_selection_index >= 0)
         return waypoint_selection_position;
+    else 
+        return sf::Vector2f();
+}
+
+// New route selection method implementations
+int TargetsContainer::getSelectedRouteIndex()
+{
+    if (!my_spaceship || selected_route_index < 0)
+        selected_route_index = -1;
+    else
+    {
+        if (selected_route_index >= PlayerSpaceship::max_routes)
+            selected_route_index = -1;
+        else if (selected_route_waypoint_index >= PlayerSpaceship::max_waypoints_in_route)
+            selected_route_index = -1;
+        else if (my_spaceship->routes[selected_route_index][selected_route_waypoint_index] >= empty_waypoint)
+            selected_route_index = -1;
+        else if (my_spaceship->routes[selected_route_index][selected_route_waypoint_index] != route_selection_position)
+            selected_route_index = -1;
+    }
+    return selected_route_index;
+}
+
+int TargetsContainer::getSelectedRouteWaypointIndex()
+{
+    return selected_route_waypoint_index;
+}
+
+void TargetsContainer::setSelectedRouteIndex(int index)
+{
+    if (index < PlayerSpaceship::max_routes && index >= -1){
+        selected_route_index = index;
+    }
+    selected_route_waypoint_index = -1;
+}
+
+void TargetsContainer::setSelectedRouteWaypointIndex(int index)
+{
+    selected_route_waypoint_index = index;
+    if (my_spaceship && index >= 0 && index < PlayerSpaceship::max_waypoints_in_route && my_spaceship->routes[selected_route_index][index] < empty_waypoint)
+        route_selection_position = my_spaceship->routes[selected_route_index][index];
+}
+
+sf::Vector2f TargetsContainer::getRouteSelectionPosition()
+{
+    if (my_spaceship && selected_route_waypoint_index >= 0)
+        return route_selection_position;
     else 
         return sf::Vector2f();
 }

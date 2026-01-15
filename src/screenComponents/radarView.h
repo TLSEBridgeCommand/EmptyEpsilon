@@ -93,6 +93,8 @@ public:
     GuiRadarView* disableGhostDots() { show_ghost_dots = false; return this; }
     GuiRadarView* enableWaypoints() { show_waypoints = true; return this; }
     GuiRadarView* disableWaypoints() { show_waypoints = false; return this; }
+    GuiRadarView* enableRoutes() { show_routes = true; return this; }
+    GuiRadarView* disableRoutes() { show_routes = false; return this; }
     GuiRadarView* enableWarpLayer() { show_warp_layer = true; return this; }
     GuiRadarView* disableWarpLayer() { show_warp_layer = false; return this; }
     GuiRadarView* setWarpLayer(int layer) { warp_layer = layer; return this; }
@@ -149,6 +151,7 @@ private:
     void drawFriendlyNotVisibleAreas(sf::RenderTarget& window);
     void drawGhostDots(sf::RenderTarget& window);
     void drawWaypoints(sf::RenderTarget& window);
+    void drawRoutes(sf::RenderTarget& window);
     void drawRangeIndicators(sf::RenderTarget& window);
     void drawTargetProjections(sf::RenderTarget& window);
     void drawMissileTubes(sf::RenderTarget& window);

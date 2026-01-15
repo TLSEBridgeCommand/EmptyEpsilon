@@ -11,6 +11,10 @@ private:
     int route_selection_index;
     int waypoint_selection_index;
     sf::Vector2f waypoint_selection_position;
+    // New route selection variables
+    int selected_route_index;
+    int selected_route_waypoint_index;
+    sf::Vector2f route_selection_position;
 public:
     enum ESelectionType
     {
@@ -33,6 +37,13 @@ public:
     void setRouteIndex(int index);
     int getRouteIndex();
     sf::Vector2f getWaypointPosition();
+    
+    // New route selection methods
+    int getSelectedRouteIndex();
+    int getSelectedRouteWaypointIndex();
+    void setSelectedRouteIndex(int index);
+    void setSelectedRouteWaypointIndex(int index);
+    sf::Vector2f getRouteSelectionPosition();
 
     void setToClosestTo(sf::Vector2f position, float max_range, ESelectionType selection_type);
 };

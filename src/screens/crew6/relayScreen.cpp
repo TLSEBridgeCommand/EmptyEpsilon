@@ -25,18 +25,32 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
 {
     targets.setAllowWaypointSelection();
     radar = new GuiRadarView(this, "RELAY_RADAR", 50000.0f, &targets, my_spaceship);
-    radar->longRange()->enableWaypoints()->enableWarpLayer()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
+    radar->longRange()->enableWaypoints()->enableRoutes()->enableWarpLayer()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
     radar->setAutoCentering(false);
     radar->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     radar->setCallbacks(
         [this](sf::Vector2f position) { //down
-            if (mode == TargetSelection && targets.getWaypointIndex() > -1 && my_spaceship)
+            if (mode == TargetSelection && my_spaceship)
             {
-                if (my_spaceship->waypoints[targets.getRouteIndex()][targets.getWaypointIndex()] < empty_waypoint && sf::length(my_spaceship->waypoints[targets.getRouteIndex()][targets.getWaypointIndex()] - position) < 10 / radar->getScale())
+                // Check for waypoint dragging
+                if (targets.getWaypointIndex() > -1)
                 {
-                    mode = MoveWaypoint;
-                    drag_route_index = targets.getRouteIndex();
-                    drag_waypoint_index = targets.getWaypointIndex();
+                    if (my_spaceship->waypoints[targets.getRouteIndex()][targets.getWaypointIndex()] < empty_waypoint && sf::length(my_spaceship->waypoints[targets.getRouteIndex()][targets.getWaypointIndex()] - position) < 10 / radar->getScale())
+                    {
+                        mode = MoveWaypoint;
+                        drag_route_index = targets.getRouteIndex();
+                        drag_waypoint_index = targets.getWaypointIndex();
+                    }
+                }
+                // Check for route dragging
+                else if (targets.getSelectedRouteIndex() > -1)
+                {
+                    if (my_spaceship->routes[targets.getSelectedRouteIndex()][targets.getSelectedRouteWaypointIndex()] < empty_waypoint && sf::length(my_spaceship->routes[targets.getSelectedRouteIndex()][targets.getSelectedRouteWaypointIndex()] - position) < 10 / radar->getScale())
+                    {
+                        mode = MoveRoute;
+                        drag_route_index = targets.getSelectedRouteIndex();
+                        drag_waypoint_index = targets.getSelectedRouteWaypointIndex();
+                    }
                 }
             }
             mouse_down_position = position;
@@ -47,6 +61,9 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
             if (mode == MoveWaypoint && my_spaceship)
                 if (my_spaceship->waypoints[drag_route_index][drag_waypoint_index] < empty_waypoint)
                     my_spaceship->commandMoveWaypoint(drag_waypoint_index, position, drag_route_index);
+            if (mode == MoveRoute && my_spaceship)
+                if (my_spaceship->routes[drag_route_index][drag_waypoint_index] < empty_waypoint)
+                    my_spaceship->commandMoveRoute(drag_waypoint_index, position, drag_route_index);
         },
         [this](sf::Vector2f position) { //up
             switch(mode)
@@ -59,12 +76,25 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
                 if (my_spaceship)
                     my_spaceship->commandAddWaypoint(position, route_index);
                 mode = TargetSelection;
+                placement_buttons->hide();
+                option_buttons->show();
+                break;
+            case RoutePlacement:
+                if (my_spaceship)
+                    my_spaceship->commandAddRoute(position, route_index);
+                mode = TargetSelection;
+                placement_buttons->hide();
                 option_buttons->show();
                 break;
             case MoveWaypoint:
                 mode = TargetSelection;
                 targets.setRouteIndex(drag_route_index);
                 targets.setWaypointIndex(drag_waypoint_index);
+                break;
+            case MoveRoute:
+                mode = TargetSelection;
+                targets.setSelectedRouteIndex(drag_route_index);
+                targets.setSelectedRouteWaypointIndex(drag_waypoint_index);
                 break;
             case LaunchProbe:
                 if (my_spaceship)
@@ -104,6 +134,38 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     // Option buttons for comms, waypoints, and probes.
     option_buttons = new GuiAutoLayout(this, "BUTTONS", GuiAutoLayout::LayoutVerticalTopToBottom);
     option_buttons->setPosition(20, 50, ATopLeft)->setSize(250, GuiElement::GuiSizeMax);
+    
+    // Placement buttons for waypoint/route placement mode.
+    placement_buttons = new GuiAutoLayout(this, "PLACEMENT_BUTTONS", GuiAutoLayout::LayoutVerticalTopToBottom);
+    placement_buttons->setPosition(20, 50, ATopLeft)->setSize(250, GuiElement::GuiSizeMax);
+    placement_buttons->hide();
+    
+    // Add placement mode UI elements
+    (new GuiLabel(placement_buttons, "PLACEMENT_LABEL", tr("Placement Mode"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    
+    // Route selector for placement mode
+    if (gameGlobalInfo->use_advanced_sector_system)
+    {
+        placement_route_selector = new GuiSelector(placement_buttons, "PLACEMENT_ROUTE_SELECTOR", [this](int index, string value) {
+            if (index < PlayerSpaceship::max_routes && index >= -1){
+                route_index = index;
+            }
+        });
+        for(int r = 0; r < PlayerSpaceship::max_routes; r++)
+        {
+            placement_route_selector->addEntry("Colour " + string(r+1), r);
+            placement_route_selector->setEntryColor(r, routeColors[r]);
+        }
+        placement_route_selector->setSize(GuiElement::GuiSizeMax, 50);
+        placement_route_selector->setSelectionIndex(0);
+    }
+    
+    // Cancel button for placement mode
+    (new GuiButton(placement_buttons, "CANCEL_PLACEMENT_BUTTON", tr("Cancel"), [this]() {
+        mode = TargetSelection;
+        placement_buttons->hide();
+        option_buttons->show();
+    }))->setSize(GuiElement::GuiSizeMax, 50);
     
     (new GuiLabel(option_buttons, "INTERACTION_LABEL", tr("Comms Options"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
 
@@ -149,6 +211,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     (new GuiButton(option_buttons, "WAYPOINT_PLACE_BUTTON", tr("Place Waypoint"), [this]() {
         mode = WaypointPlacement;
         option_buttons->hide();
+        placement_buttons->show();
     }))->setSize(GuiElement::GuiSizeMax, 50);
 
     delete_waypoint_button = new GuiButton(option_buttons, "WAYPOINT_DELETE_BUTTON", tr("Delete Waypoint"), [this]() {
@@ -158,6 +221,21 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
         }
     });
     delete_waypoint_button->setSize(GuiElement::GuiSizeMax, 50);
+
+    // Manage routes.
+    (new GuiButton(option_buttons, "ROUTE_PLACE_BUTTON", tr("Place Route"), [this]() {
+        mode = RoutePlacement;
+        option_buttons->hide();
+        placement_buttons->show();
+    }))->setSize(GuiElement::GuiSizeMax, 50);
+
+    delete_route_button = new GuiButton(option_buttons, "ROUTE_DELETE_BUTTON", tr("Delete Route"), [this]() {
+        if (my_spaceship && targets.getSelectedRouteWaypointIndex() >= 0)
+        {
+            my_spaceship->commandRemoveRoute(targets.getSelectedRouteWaypointIndex(), targets.getSelectedRouteIndex());
+        }
+    });
+    delete_route_button->setSize(GuiElement::GuiSizeMax, 50);
     
     // Manage routes.
     if (gameGlobalInfo->use_advanced_sector_system)
@@ -169,11 +247,12 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
         });
         for(int r = 0; r < PlayerSpaceship::max_routes; r++)
         {
-            route_selector->addEntry("Route " + string(r+1), r);
+            route_selector->addEntry("Colour " + string(r+1), r);
             route_selector->setEntryColor(r, routeColors[r]);
         }
         route_selector->setSize(GuiElement::GuiSizeMax, 50);
         route_selector->setSelectionIndex(0);
+        route_selector->hide(); // Hide the route selector from main menu
     }
     
     // Show map layers.
@@ -199,6 +278,14 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     // Bottom layout.
     GuiAutoLayout* layout = new GuiAutoLayout(this, "", GuiAutoLayout::LayoutVerticalBottomToTop);
     layout->setPosition(-20, -70, ABottomRight)->setSize(300, GuiElement::GuiSizeMax);
+
+    // Center on ship
+    center_button = new GuiToggleButton(layout, "CENTER_ON_SHIP", tr("Center On Ship"), [this](bool value) {
+        if(!my_spaceship) return;
+        radar->setAutoCentering(value);
+    });
+    center_button->setSize(GuiElement::GuiSizeMax, 50);
+    center_button->setValue(false);
 
     // Alert level buttons.
     if (allow_alert) {
@@ -346,10 +433,17 @@ void RelayScreen::onDraw(sf::RenderTarget& window)
         launch_probe_button->setText(tr("Launch Probe") + " (" + string(my_spaceship->scan_probe_stock) + ")");
     }
 
+    // Enable/disable waypoint deletion button based on waypoint selection
     if (targets.getWaypointIndex() >= 0)
         delete_waypoint_button->enable();
     else
         delete_waypoint_button->disable();
+
+    // Enable/disable route deletion button based on route selection
+    if (targets.getSelectedRouteIndex() >= 0)
+        delete_route_button->enable();
+    else
+        delete_route_button->disable();
 }
 
 void RelayScreen::onHotkey(const HotkeyResult& key)
@@ -379,11 +473,17 @@ void RelayScreen::onHotkey(const HotkeyResult& key)
         {
             mode = WaypointPlacement;
             option_buttons->hide();
+            placement_buttons->show();
         }
         if (key.hotkey == "DELETE_WAYPOINT")
         {
             if (targets.getWaypointIndex() >= 0)
                 my_spaceship->commandRemoveWaypoint(targets.getWaypointIndex(), targets.getRouteIndex());
+        }
+        if (key.hotkey == "DELETE_ROUTE")
+        {
+            if (targets.getSelectedRouteWaypointIndex() >= 0)
+                my_spaceship->commandRemoveRoute(targets.getSelectedRouteWaypointIndex(), targets.getSelectedRouteIndex());
         }
         if (key.hotkey == "LAUNCH_PROBE")
         {

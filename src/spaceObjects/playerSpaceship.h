@@ -149,6 +149,7 @@ public:
     std::vector<CustomShipFunction> custom_functions;
 
     sf::Vector2f waypoints[max_routes][max_waypoints_in_route];
+    sf::Vector2f routes[max_routes][max_waypoints_in_route];
 
     // Presets for engeneering screen
     int active_engineer_presets_number;
@@ -329,6 +330,9 @@ public:
     void commandAddWaypoint(sf::Vector2f position, int route = 0);
     void commandRemoveWaypoint(int index, int route = 0);
     void commandMoveWaypoint(int index, sf::Vector2f position, int route = 0);
+    void commandAddRoute(sf::Vector2f position, int route = 0);
+    void commandRemoveRoute(int index, int route = 0);
+    void commandMoveRoute(int index, sf::Vector2f position, int route = 0);
     void commandActivateSelfDestruct();
     void commandCancelSelfDestruct();
     void commandConfirmDestructCode(int8_t index, uint32_t code);
