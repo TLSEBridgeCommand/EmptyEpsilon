@@ -280,7 +280,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     layout->setPosition(-20, -70, ABottomRight)->setSize(300, GuiElement::GuiSizeMax);
 
     // Center on ship
-    center_button = new GuiToggleButton(layout, "CENTER_ON_SHIP", tr("Center On Ship"), [this](bool value) {
+    center_button = new GuiToggleButton(layout, "CENTER_ON_SHIP", tr("Center On Vessel"), [this](bool value) {
         if(!my_spaceship) return;
         radar->setAutoCentering(value);
     });
