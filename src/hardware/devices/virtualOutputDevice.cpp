@@ -31,6 +31,7 @@ VirtualOutputDevice::VirtualOutputDevice()
 VirtualOutputDevice::~VirtualOutputDevice()
 {
     renderer->destroy();
+    delete renderer;
 }
 
 bool VirtualOutputDevice::configure(std::unordered_map<string, string> settings)

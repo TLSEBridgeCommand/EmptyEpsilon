@@ -25,6 +25,7 @@ private:
     
 public:
     OSCDevice();
+    virtual ~OSCDevice() = default;
     
     virtual bool configure(std::unordered_map<string, string> settings) override;
 
