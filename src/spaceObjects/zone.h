@@ -12,6 +12,8 @@ public:
     virtual void drawOnGMRadar(sf::RenderTarget& window, sf::Vector2f position, float scale, float rotation, bool long_range) override;
 
     virtual bool canHideInNebula()  override { return false; }
+    virtual bool canBeTargetedBy(P<SpaceObject> other) override { return false; }
+    virtual bool canBeSelectedBy(P<SpaceObject> other) override { return false; }
 
     void setColor(int r, int g, int b);
     void setPoints(std::vector<sf::Vector2f> points);
