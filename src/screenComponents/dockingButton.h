@@ -5,6 +5,7 @@
 #include "spaceObjects/playerSpaceship.h"
 
 class SpaceObject;
+class GuiDockingMenu;
 class GuiDockingButton : public GuiButton
 {
 private:

@@ -7,6 +7,7 @@
 class GuiKeyValueDisplay;
 class GuiLabel;
 class GuiDockingButton;
+class GuiDockingMenu;
 class GuiCombatManeuver;
 
 class HelmsScreen : public GuiOverlay
@@ -24,12 +25,15 @@ private:
     GuiLabel* heading_hint;
     GuiCombatManeuver* combat_maneuver;
     GuiDockingButton* docking_button;
+    GuiDockingMenu* docking_menu;
 public:
     HelmsScreen(GuiContainer* owner);
 
     virtual void onDraw(sf::RenderTarget& window) override;
     virtual void onHotkey(const HotkeyResult& key) override;
     virtual bool onJoystickAxis(const AxisAction& axisAction) override;
+    
+    void showDockingMenu();
 };
 
 #endif//HELMS_SCREEN_H

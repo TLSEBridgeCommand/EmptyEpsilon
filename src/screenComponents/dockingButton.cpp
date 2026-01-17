@@ -2,6 +2,8 @@
 #include "playerInfo.h"
 #include "spaceObjects/playerSpaceship.h"
 #include "dockingButton.h"
+#include "screens/crew6/helmsScreen.h"
+#include "gui/gui2_element.h"
 
 GuiDockingButton::GuiDockingButton(GuiContainer* owner, string id, P<PlayerSpaceship> targetSpaceship)
 : GuiButton(owner, id, "", [this]() { click(); }), target_spaceship(targetSpaceship)
@@ -16,7 +18,22 @@ void GuiDockingButton::click()
     switch(target_spaceship->docking_state)
     {
     case DS_NotDocking:
-        target_spaceship->commandDock(findDockingTarget());
+        {
+            // Find the helms screen's docking menu and show it
+            GuiContainer* owner = getOwner();
+            while (owner && !dynamic_cast<HelmsScreen*>(owner))
+            {
+                GuiElement* element = dynamic_cast<GuiElement*>(owner);
+                if (element)
+                    owner = element->getOwner();
+                else
+                    break;
+            }
+            if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
+            {
+                helms_screen->showDockingMenu();
+            }
+        }
         break;
     case DS_Docking:
         target_spaceship->commandAbortDock();
@@ -36,11 +53,13 @@ void GuiDockingButton::onDraw(sf::RenderTarget& window)
 {
     if (target_spaceship)
     {
+        P<SpaceObject> docking_target = findDockingTarget();
+        
         switch(target_spaceship->docking_state)
         {
         case DS_NotDocking:
             setText(tr("Request Dock"));
-            if (target_spaceship->canStartDocking() && findDockingTarget())
+            if (target_spaceship->canStartDocking() && docking_target)
             {
                 enable();
             }else{
@@ -80,7 +99,22 @@ void GuiDockingButton::onHotkey(const HotkeyResult& key)
             }
         }
         else if (key.hotkey == "DOCK_REQUEST")
-            target_spaceship->commandDock(findDockingTarget());
+        {
+            // Find the helms screen's docking menu and show it
+            GuiContainer* owner = getOwner();
+            while (owner && !dynamic_cast<HelmsScreen*>(owner))
+            {
+                GuiElement* element = dynamic_cast<GuiElement*>(owner);
+                if (element)
+                    owner = element->getOwner();
+                else
+                    break;
+            }
+            if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
+            {
+                helms_screen->showDockingMenu();
+            }
+        }
         else if (key.hotkey == "DOCK_ABORT")
             target_spaceship->commandAbortDock();
         else if (key.hotkey == "UNDOCK")

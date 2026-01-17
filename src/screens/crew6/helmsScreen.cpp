@@ -12,6 +12,7 @@
 #include "screenComponents/warpFrequencySelector.h"
 #include "screenComponents/jumpControls.h"
 #include "screenComponents/dockingButton.h"
+#include "screenComponents/dockingMenu.h"
 #include "screenComponents/alertOverlay.h"
 #include "screenComponents/customShipFunctions.h"
 #include "screenComponents/commsOverlay.h"
@@ -95,6 +96,10 @@ HelmsScreen::HelmsScreen(GuiContainer* owner)
     docking_button = new GuiDockingButton(this, "DOCKING", my_spaceship);
     docking_button->setPosition(20, -20, ABottomLeft)->setSize(280, 50)->setVisible(my_spaceship && my_spaceship->getCanDock());
 
+    // Create docking menu (hidden by default)
+    docking_menu = new GuiDockingMenu(this, my_spaceship);
+    docking_menu->hide();
+
     // new ShipsLog(this, helmsOfficer);
 
     (new GuiCustomShipFunctions(this, helmsOfficer, "", my_spaceship))->setPosition(-20, 120, ATopRight)->setSize(250, GuiElement::GuiSizeMax);
@@ -158,5 +163,13 @@ void HelmsScreen::onHotkey(const HotkeyResult& key)
             my_spaceship->commandTargetRotation(my_spaceship->getRotation() - 5.0f);
         else if (key.hotkey == "TURN_RIGHT")
             my_spaceship->commandTargetRotation(my_spaceship->getRotation() + 5.0f);
+    }
+}
+
+void HelmsScreen::showDockingMenu()
+{
+    if (docking_menu)
+    {
+        docking_menu->show();
     }
 }

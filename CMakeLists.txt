@@ -204,6 +204,7 @@ set(SOURCES
 	src/screenComponents/viewportMainScreen.cpp
 	src/screenComponents/selfDestructEntry.cpp
 	src/screenComponents/dockingButton.cpp
+	src/screenComponents/dockingMenu.cpp
 	src/screenComponents/shieldsEnableButton.cpp
 	src/screenComponents/selfDestructButton.cpp
 	src/screenComponents/shieldFreqencySelect.cpp
