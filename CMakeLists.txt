@@ -323,6 +323,9 @@ set(SOURCES
 	src/hardware/devices/uDMXDevice.cpp
 	src/hardware/devices/virtualOutputDevice.cpp
 	src/hardware/devices/philipsHueDevice.cpp
+	src/crashLogger.cpp
+    src/networkHealthMonitor.cpp
+    src/connectionMonitor.cpp
 )
 
 
@@ -490,7 +493,7 @@ if(WIN32)
   target_link_libraries(${EXECUTABLE_NAME} wsock32 iphlpapi)
   if(ENABLE_CRASH_LOGGER)
     include_directories(${DRMINGW_ROOT}/include/)
-    target_link_libraries(${EXECUTABLE_NAME} exchndl)
+    target_link_libraries(${EXECUTABLE_NAME} exchndl dbghelp)
   endif()
 elseif(ANDROID)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--whole-archive ${SFML_INSTALL_PATH}/lib/${ANDROID_ABI}/libsfml-main.a -Wl,--no-whole-archive")

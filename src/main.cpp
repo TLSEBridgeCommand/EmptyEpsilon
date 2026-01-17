@@ -28,6 +28,8 @@
 #include "tutorialGame.h"
 
 #include "hardware/hardwareController.h"
+#include "crashLogger.h"
+#include "networkHealthMonitor.h"
 // #ifdef __WIN32__
 // #include "discord.h"
 // #endif
@@ -103,6 +105,10 @@ int main(int argc, char** argv)
 #if defined(__WIN32__) && !defined(DEBUG)
     Logging::setLogFile("EmptyEpsilon.log");
 #endif
+
+    // Initialize crash logging system
+    CrashLogger::getInstance();
+    NetworkHealthMonitor::getInstance();
 #ifdef CONFIG_DIR
     PreferencesManager::load(CONFIG_DIR "options.ini");
 #endif
@@ -188,6 +194,9 @@ int main(int argc, char** argv)
         HttpServer* server = new HttpServer(port_nr);
         server->addHandler(new HttpRequestFileHandler("www"));
         server->addHandler(new HttpScriptHandler());
+        
+        // Store server pointer for cleanup
+        engine->registerObject("httpServer", server);
     }
 
     colorConfig.load();
@@ -362,6 +371,16 @@ int main(int argc, char** argv)
 #endif
         {
             PreferencesManager::save("options.ini");
+        }
+    }
+
+    // Clean up HTTP server if it exists
+    if (engine->getObject("httpServer"))
+    {
+        P<HttpServer> httpServer = engine->getObject("httpServer");
+        if (httpServer)
+        {
+            httpServer->destroy();
         }
     }
 
