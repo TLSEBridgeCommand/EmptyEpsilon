@@ -2,6 +2,9 @@
 #include "artifact.h"
 #include "explosionEffect.h"
 #include "playerSpaceship.h"
+#include "playerInfo.h"
+#include "gameGlobalInfo.h"
+#include "factionInfo.h"
 #include "main.h"
 
 #include "scriptInterface.h"
@@ -23,6 +26,10 @@ REGISTER_SCRIPT_SUBCLASS(Artifact, SpaceObject)
     REGISTER_SCRIPT_CLASS_FUNCTION(Artifact, onPickUp);
     /// Let the artifact rotate. For reference, normal asteroids in the game have spins between 0.1 and 0.8.
     REGISTER_SCRIPT_CLASS_FUNCTION(Artifact, setSpin);
+    /// Set the radar trace used for this artifact on radar displays.
+    /// If not set, defaults to "RadarBlip.png".
+    /// Example: setRadarTrace("RadarArrow.png"), setRadarTrace("redicule.png").
+    REGISTER_SCRIPT_CLASS_FUNCTION(Artifact, setRadarTrace);
 }
 
 REGISTER_MULTIPLAYER_CLASS(Artifact, "Artifact");
@@ -31,6 +38,7 @@ Artifact::Artifact()
 {
     registerMemberReplication(&model_data_name);
     registerMemberReplication(&artifact_spin);
+    registerMemberReplication(&radar_trace);
 
     setRotation(random(0, 360));
 
@@ -39,6 +47,7 @@ Artifact::Artifact()
     model_info.setData(current_model_data_name);
 
     allow_pickup = false;
+    radar_trace = ""; // Empty means use default
 }
 
 void Artifact::update(float delta)
@@ -63,14 +72,63 @@ void Artifact::draw3D()
 void Artifact::drawOnRadar(sf::RenderTarget& window, sf::Vector2f position, float scale, float rotation, bool long_range)
 {
     sf::Sprite object_sprite;
-    textureManager.setTexture(object_sprite, "RadarBlip.png");
-    object_sprite.setRotation(getRotation());
+    
+    // If the artifact hasn't been scanned, draw the default blip icon.
+    // Otherwise, draw the custom radar trace icon (if set).
+    string trace_name;
+    if (my_spaceship && (getScannedStateFor(my_spaceship) == SS_NotScanned || getScannedStateFor(my_spaceship) == SS_FriendOrFoeIdentified))
+    {
+        trace_name = "RadarBlip.png";
+    }
+    else
+    {
+        trace_name = radar_trace.empty() ? "RadarBlip.png" : radar_trace;
+    }
+    
+    textureManager.setTexture(object_sprite, trace_name);
+    object_sprite.setRotation(getRotation() - rotation);
     object_sprite.setPosition(position);
-    object_sprite.setColor(sf::Color(255, 255, 255));
-    float size = getRadius() * scale / object_sprite.getTextureRect().width * 2;
-    if (size < 0.2)
-        size = 0.2;
-    object_sprite.setScale(size, size);
+    
+    // Apply color based on scan state and faction, similar to ships
+    if (my_spaceship)
+    {
+        if (getScannedStateFor(my_spaceship) != SS_NotScanned)
+        {
+            // Scanned: show faction-based colors
+            if (!gameGlobalInfo->color_by_faction)
+            {
+                // Color by relationship: Red (enemy), Green (friendly), Blue (neutral)
+                if (isEnemy(my_spaceship))
+                    object_sprite.setColor(sf::Color::Red);
+                else if (isFriendly(my_spaceship))
+                    object_sprite.setColor(sf::Color(128, 255, 128));
+                else
+                    object_sprite.setColor(sf::Color(128, 128, 255));
+            }
+            else
+            {
+                // Color by faction
+                object_sprite.setColor(factionInfo[getFactionId()]->gm_color);
+            }
+        }
+        else
+        {
+            // Not scanned: gray
+            object_sprite.setColor(sf::Color(192, 192, 192));
+        }
+    }
+    else
+    {
+        // No player ship (GM view): use faction color
+        object_sprite.setColor(factionInfo[getFactionId()]->gm_color);
+    }
+    
+    // Use fixed scale like ships do, instead of scaling based on texture size
+    if (long_range)
+    {
+        object_sprite.setScale(0.7, 0.7);
+    }
+    // For short range, use default scale (1.0) like ships
     window.draw(object_sprite);
 }
 
@@ -117,6 +175,11 @@ void Artifact::onPickUp(ScriptSimpleCallback callback)
 {
     this->allow_pickup = 1;
     this->on_pickup_callback = callback;
+}
+
+void Artifact::setRadarTrace(string trace)
+{
+    radar_trace = trace;
 }
 
 string Artifact::getExportLine()

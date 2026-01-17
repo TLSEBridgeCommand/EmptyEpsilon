@@ -10,6 +10,7 @@ private:
     float artifact_spin=0.0;
     bool allow_pickup;
     ScriptSimpleCallback on_pickup_callback;
+    string radar_trace;
 public:
     Artifact();
 
@@ -25,6 +26,7 @@ public:
     void setSpin(float spin=0.0);
     void explode();
     void allowPickup(bool allow);
+    void setRadarTrace(string trace);
 
     string current_model_data_name;
 
