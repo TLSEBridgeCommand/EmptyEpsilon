@@ -7,6 +7,7 @@
 #include "spaceObjects/playerSpaceship.h"
 #include "preferenceManager.h"
 #include "main.h"
+#include "input.h"
 
 #include "screenComponents/viewport3d.h"
 #include "screenComponents/radarView.h"
@@ -31,6 +32,8 @@
 #include "gui/gui2_panel.h"
 #include "gui/gui2_scrolltext.h"
 #include "gui/gui2_button.h"
+#include "gui/gui2_overlay.h"
+#include "gui/gui2_label.h"
 
 ///The TutorialGame object is normally never created.
 /// And it only used to setup the special tutorial level.
@@ -58,6 +61,24 @@ TutorialGame::TutorialGame(bool repeated_tutorial, string filename)
 
     this->viewport = nullptr;
     this->repeated_tutorial = repeated_tutorial;
+    
+    // Initialize inactivity tracking
+    inactivity_timer = 0.0f;
+    warning_timer = 0.0f;
+    warning_shown = false;
+    warning_overlay = nullptr;
+    warning_panel = nullptr;
+    warning_label = nullptr;
+    continue_button = nullptr;
+    end_button = nullptr;
+    
+    // Initialize end tutorial confirmation dialog
+    end_tutorial_button = nullptr;
+    confirm_overlay = nullptr;
+    confirm_panel = nullptr;
+    confirm_label = nullptr;
+    confirm_yes_button = nullptr;
+    confirm_cancel_button = nullptr;
 
     i18n::load("locale/" + PreferencesManager::get("language", "en") + ".po");
     i18n::load("locale/tutorial." + PreferencesManager::get("language", "en") + ".po");
@@ -116,9 +137,62 @@ void TutorialGame::createScreens()
             finish();
         }))->setPosition(-20, 20, ATopRight)->setSize(120, 50);
     }
+    
+    // Create "End Tutorial" button in bottom right
+    end_tutorial_button = new GuiButton(this, "END_TUTORIAL_BUTTON", tr("End Tutorial"), [this]() {
+        showEndTutorialConfirmation();
+    });
+    end_tutorial_button->setPosition(-20, 20, ATopRight)->setSize(150, 50);
+    
+    // Create end tutorial confirmation dialog
+    confirm_overlay = new GuiOverlay(this, "END_TUTORIAL_CONFIRM", sf::Color(0, 0, 0, 192));
+    confirm_overlay->setBlocking(true)->hide();
+    
+    confirm_panel = new GuiPanel(confirm_overlay, "CONFIRM_PANEL");
+    confirm_panel->setPosition(0, 0, ACenter)->setSize(500, 200);
+    
+    confirm_label = new GuiLabel(confirm_panel, "CONFIRM_LABEL", tr("Would you like to end this tutorial?"), 30);
+    confirm_label->setPosition(0, 20, ATopCenter)->setSize(480, 80);
+    confirm_label->setAlignment(ACenter);
+    
+    confirm_yes_button = new GuiButton(confirm_panel, "CONFIRM_YES_BUTTON", tr("Yes"), [this]() {
+        finish();
+    });
+    confirm_yes_button->setPosition(-20, -20, ABottomLeft)->setSize(220, 50);
+    
+    confirm_cancel_button = new GuiButton(confirm_panel, "CONFIRM_CANCEL_BUTTON", tr("Cancel"), [this]() {
+        hideEndTutorialConfirmation();
+    });
+    confirm_cancel_button->setPosition(20, -20, ABottomRight)->setSize(220, 50);
+    
+    // Create inactivity warning dialog
+    warning_overlay = new GuiOverlay(this, "INACTIVITY_WARNING", sf::Color(0, 0, 0, 192));
+    warning_overlay->setBlocking(true)->hide();
+    
+    warning_panel = new GuiPanel(warning_overlay, "WARNING_PANEL");
+    warning_panel->setPosition(0, 0, ACenter)->setSize(600, 250);
+    
+    warning_label = new GuiLabel(warning_panel, "WARNING_LABEL", tr("No input detected for 5 minutes.\nThe tutorial will be reset if no action is taken in 30 seconds."), 30);
+    warning_label->setPosition(0, 20, ATopCenter)->setSize(580, 120);
+    warning_label->setAlignment(ACenter);
+    
+    continue_button = new GuiButton(warning_panel, "CONTINUE_BUTTON", tr("Continue"), [this]() {
+        hideInactivityWarning();
+        resetInactivityTimer();
+    });
+    continue_button->setPosition(-20, -20, ABottomLeft)->setSize(280, 50);
+    
+    end_button = new GuiButton(warning_panel, "END_BUTTON", tr("End Tutorial"), [this]() {
+        finish();
+    });
+    end_button->setPosition(20, -20, ABottomRight)->setSize(280, 50);
+    
     hideAllScreens();
 
     engine->setGameSpeed(1.0);
+    
+    // Start inactivity timer when screens are created
+    resetInactivityTimer();
 }
 
 void TutorialGame::update(float delta)
@@ -143,10 +217,49 @@ void TutorialGame::update(float delta)
         camera_position = camera_position * 0.9f + targetCameraPosition * 0.1f;
         camera_yaw += sf::angleDifference(camera_yaw, target_camera_yaw) * 0.1f;
     }
+    
+    // Handle inactivity timeout - only track if tutorial has started (viewport exists)
+    if (viewport != nullptr)
+    {
+        // Check for any input (mouse/touch press) to reset timer
+        // This catches touches anywhere on screen, including on buttons
+        if (!warning_shown && (InputHandler::mouseIsPressed(sf::Mouse::Left) || 
+                               InputHandler::mouseIsPressed(sf::Mouse::Right) || 
+                               InputHandler::mouseIsPressed(sf::Mouse::Middle)))
+        {
+            resetInactivityTimer();
+        }
+        
+        if (!warning_shown)
+        {
+            inactivity_timer += delta;
+            // Show warning after 5 minutes (300 seconds)
+            if (inactivity_timer >= 300.0f)
+            {
+                showInactivityWarning();
+            }
+        }
+        else
+        {
+            // If warning is shown, track the 30-second timeout
+            warning_timer += delta;
+            // Auto-return to menu after 30 seconds
+            if (warning_timer >= 30.0f)
+            {
+                finish();
+            }
+        }
+    }
 }
 
 void TutorialGame::onKey(sf::Event::KeyEvent key, int unicode)
 {
+    // Reset inactivity timer on any key press (except when warning is shown, let buttons handle it)
+    if (!warning_shown)
+    {
+        resetInactivityTimer();
+    }
+    
     switch(key.code)
     {
     case sf::Keyboard::Escape:
@@ -156,6 +269,26 @@ void TutorialGame::onKey(sf::Event::KeyEvent key, int unicode)
     default:
         break;
     }
+}
+
+void TutorialGame::onClick(sf::Vector2f mouse_position)
+{
+    // Reset inactivity timer on mouse click (except when warning is shown, let buttons handle it)
+    if (!warning_shown)
+    {
+        resetInactivityTimer();
+    }
+    GuiCanvas::onClick(mouse_position);
+}
+
+void TutorialGame::handleJoystickButton(unsigned int joystickId, unsigned int button, bool state)
+{
+    // Reset inactivity timer on joystick button press (except when warning is shown, let buttons handle it)
+    if (!warning_shown && state)
+    {
+        resetInactivityTimer();
+    }
+    GuiCanvas::handleJoystickButton(joystickId, button, state);
 }
 
 void TutorialGame::setPlayerShip(P<PlayerSpaceship> ship)
@@ -308,6 +441,48 @@ void TutorialGame::hideAllScreens()
     {
         station_screen[n]->hide();
     }
+}
+
+void TutorialGame::resetInactivityTimer()
+{
+    inactivity_timer = 0.0f;
+    warning_timer = 0.0f;
+}
+
+void TutorialGame::showInactivityWarning()
+{
+    if (warning_overlay == nullptr)
+        return;
+    
+    warning_shown = true;
+    warning_timer = 0.0f;
+    warning_overlay->show();
+}
+
+void TutorialGame::hideInactivityWarning()
+{
+    if (warning_overlay == nullptr)
+        return;
+    
+    warning_shown = false;
+    warning_overlay->hide();
+    resetInactivityTimer();
+}
+
+void TutorialGame::showEndTutorialConfirmation()
+{
+    if (confirm_overlay == nullptr)
+        return;
+    
+    confirm_overlay->show();
+}
+
+void TutorialGame::hideEndTutorialConfirmation()
+{
+    if (confirm_overlay == nullptr)
+        return;
+    
+    confirm_overlay->hide();
 }
 
 void LocalOnlyGame::update(float delta)

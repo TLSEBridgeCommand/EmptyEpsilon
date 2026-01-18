@@ -9,6 +9,8 @@ class GuiRadarView;
 class GuiPanel;
 class GuiButton;
 class GuiScrollText;
+class GuiOverlay;
+class GuiLabel;
 
 class TutorialGame : public Updatable, public GuiCanvas
 {
@@ -23,6 +25,24 @@ class TutorialGame : public Updatable, public GuiCanvas
     GuiButton* next_button;
 
     bool repeated_tutorial;
+    
+    // Inactivity timeout tracking
+    float inactivity_timer;
+    float warning_timer;
+    bool warning_shown;
+    GuiOverlay* warning_overlay;
+    GuiPanel* warning_panel;
+    GuiLabel* warning_label;
+    GuiButton* continue_button;
+    GuiButton* end_button;
+    
+    // End tutorial confirmation dialog
+    GuiButton* end_tutorial_button;
+    GuiOverlay* confirm_overlay;
+    GuiPanel* confirm_panel;
+    GuiLabel* confirm_label;
+    GuiButton* confirm_yes_button;
+    GuiButton* confirm_cancel_button;
 public:
     ScriptSimpleCallback _onNext;
 
@@ -30,6 +50,8 @@ public:
 
     virtual void update(float delta) override;
     virtual void onKey(sf::Event::KeyEvent key, int unicode) override;
+    virtual void onClick(sf::Vector2f mouse_position) override;
+    virtual void handleJoystickButton(unsigned int joystickId, unsigned int button, bool state) override;
 
     void setPlayerShip(P<PlayerSpaceship> ship);
 
@@ -47,6 +69,11 @@ private:
     void setDefaultsFromPreferences();
     void hideAllScreens();
     void createScreens();
+    void resetInactivityTimer();
+    void showInactivityWarning();
+    void hideInactivityWarning();
+    void showEndTutorialConfirmation();
+    void hideEndTutorialConfirmation();
 };
 
 class LocalOnlyGame : public EpsilonServer
