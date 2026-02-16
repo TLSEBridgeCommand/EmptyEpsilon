@@ -10,6 +10,7 @@ class GuiLabel;
 class GuiScrollText;
 class GuiListbox;
 class GuiTextEntry;
+class GuiToggleButton;
 
 class GuiCommsOverlay : public GuiElement
 {
@@ -32,18 +33,27 @@ private:
     GuiScrollText* chat_comms_text;
     GuiButton* chat_comms_send_button;
     GuiButton* chat_comms_close_button;
+    GuiToggleButton* chat_comms_minimize_button;
+    GuiLabel* chat_comms_title_label;
+    GuiElement* chat_comms_content;
 
     GuiPanel* script_comms_box;
     GuiScrollText* script_comms_text;
     GuiListbox* script_comms_options;
     GuiButton* script_comms_close;
+    GuiLabel* script_comms_title_label;
     // NB new declaration
     bool chat_open_last_update;
+    bool chat_minimized;
+    float chat_original_height;
 public:
     GuiCommsOverlay(GuiContainer* owner);
 
     virtual void onDraw(sf::RenderTarget& window);
     void clearElements();
+    
+    void minimizeChat(bool minimize = true);
+    bool isChatMinimized() const;
 };
 
 #endif//COMMS_OVERLAY_H

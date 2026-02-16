@@ -19,19 +19,27 @@ void GuiDockingButton::click()
     {
     case DS_NotDocking:
         {
-            // Find the helms screen's docking menu and show it
-            GuiContainer* owner = getOwner();
-            while (owner && !dynamic_cast<HelmsScreen*>(owner))
+            // For player drones, dock directly without showing menu
+            if (target_spaceship->ship_template && target_spaceship->ship_template->isShipCargo)
             {
-                GuiElement* element = dynamic_cast<GuiElement*>(owner);
-                if (element)
-                    owner = element->getOwner();
-                else
-                    break;
+                target_spaceship->commandDock(findDockingTarget());
             }
-            if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
+            else
             {
-                helms_screen->showDockingMenu();
+                // For regular ships, show the docking menu
+                GuiContainer* owner = getOwner();
+                while (owner && !dynamic_cast<HelmsScreen*>(owner))
+                {
+                    GuiElement* element = dynamic_cast<GuiElement*>(owner);
+                    if (element)
+                        owner = element->getOwner();
+                    else
+                        break;
+                }
+                if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
+                {
+                    helms_screen->showDockingMenu();
+                }
             }
         }
         break;
