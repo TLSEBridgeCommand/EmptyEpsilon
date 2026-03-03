@@ -199,6 +199,7 @@ void GameGlobalInfo::addScript(P<Script> script)
 void GameGlobalInfo::reset()
 {
     gm_callback_functions.clear();
+    gm_callback_names.clear();
     gm_messages.clear();
     on_gm_click = nullptr;
 
