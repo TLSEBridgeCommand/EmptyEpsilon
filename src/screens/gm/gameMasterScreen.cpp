@@ -504,7 +504,14 @@ void GameMasterScreen::onKey(sf::Event::KeyEvent key, int unicode)
     switch(key.code)
     {
     case sf::Keyboard::Delete:
-        gameMasterActions->commandDestroy(targets.getTargets());
+        {
+            PVector<SpaceObject> to_destroy;
+            for (P<SpaceObject> obj : targets.getTargets())
+                if (obj && !P<PlayerSpaceship>(obj))
+                    to_destroy.push_back(obj);
+            if (!to_destroy.empty())
+                gameMasterActions->commandDestroy(to_destroy);
+        }
         break;
     case sf::Keyboard::F5:
         Clipboard::setClipboard(getScriptExport(false));

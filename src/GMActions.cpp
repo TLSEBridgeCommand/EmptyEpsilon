@@ -191,9 +191,9 @@ void GameMasterActions::onReceiveClientCommand(int32_t client_id, sf::Packet& pa
             packet >> selection;
             for(P<SpaceObject> obj : selection)
             {
-                if (obj)
+                if (obj && !P<PlayerSpaceship>(obj))
                     obj->destroy();
-            }        
+            }
         }
         break;
         case CMD_SEND_COMM_TO_PLAYER_SHIP:
