@@ -1098,6 +1098,9 @@ DockStyle SpaceShip::canBeDockedBy(P<SpaceObject> obj)
     P<SpaceShip> ship = obj;
     if (!ship || !ship->ship_template)
         return DockStyle::None;
+    // Drones (isShipCargo) can always dock back to a carrier that has an open dock.
+    if (ship->ship_template->isShipCargo && Dock::findOpenForDocking(docks, max_docks_count))
+        return DockStyle::External;
     if (ship_template->external_dock_classes.count(ship->ship_template->getClass()) > 0)
         return DockStyle::External;
     if (ship_template->external_dock_classes.count(ship->ship_template->getSubClass()) > 0)
