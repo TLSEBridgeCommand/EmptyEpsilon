@@ -77,7 +77,7 @@ void BriefingScreen::updateImage()
     }
 
     for (size_t i = 0; i < images.size(); ++i) {
-        images[i]->setVisible(i == current_page);
+        images[i]->setVisible(i == static_cast<size_t>(current_page));
     }
 
     button_prev->setVisible(current_page > 0);
