@@ -157,10 +157,7 @@ float BeamTemplate::getDamage()
 
 void BeamTemplate::setDamage(float damage)
 {
-    if(damage < 0)
-        this->damage = 0;
-    else
-        this->damage = damage;
+    this->damage = damage;  // Negative values = repair beam (adds hull per cycle)
 }
 
 float BeamTemplate::getEnergyPerFire()

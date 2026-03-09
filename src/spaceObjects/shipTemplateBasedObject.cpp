@@ -263,6 +263,14 @@ bool ShipTemplateBasedObject::hasShield()
 
 void ShipTemplateBasedObject::takeDamage(float damage_amount, DamageInfo info)
 {
+    // Negative damage = repair (e.g. repair beam). Bypasses shields, adds to hull.
+    if (damage_amount < 0.0)
+    {
+        float repair = -damage_amount;
+        hull_strength = std::min(hull_max, hull_strength + repair);
+        return;
+    }
+
     // Heat damage are not blocked by shields
     if (info.type == DT_Heat)
     {
