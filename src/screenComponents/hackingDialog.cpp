@@ -122,10 +122,10 @@ void GuiHackingDialog::onDraw(sf::RenderTarget& window)
         status_label->setText(tr("Hacking in Progress: ") + string(int(100 * progress)) + "%");
         
         int difficulty = 2;
-        if (gameGlobalInfo) {
-          difficulty = gameGlobalInfo->hacking_difficulty;
-        }
-    
+        if (target && target->getHackingDifficulty() > 0)
+            difficulty = target->getHackingDifficulty() - 1;
+        else if (gameGlobalInfo)
+            difficulty = gameGlobalInfo->hacking_difficulty;
         apply_button->setEnable(game->getProgress() > 0.7 + difficulty / 10);
     }
     if (target_system != "")
@@ -161,10 +161,12 @@ void GuiHackingDialog::onMiniGameComplete(bool success, float value)
 void GuiHackingDialog::getNewGame() {
     int difficulty = 2;
     EHackingGames games = HG_All;
-    if (gameGlobalInfo) {
-      difficulty = gameGlobalInfo->hacking_difficulty;
-      games = gameGlobalInfo->hacking_games;
-    }
+    if (target && target->getHackingDifficulty() > 0)
+        difficulty = target->getHackingDifficulty() - 1;
+    else if (gameGlobalInfo)
+        difficulty = gameGlobalInfo->hacking_difficulty;
+    if (gameGlobalInfo)
+        games = gameGlobalInfo->hacking_games;
 
     switch (games)
     {

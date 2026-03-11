@@ -49,6 +49,7 @@ public:
     virtual std::unordered_map<string, string> getGMInfo() override;
     virtual bool canRestockMissiles() override { return restocks_missiles_docked; }
     virtual bool canBeTargetedBy(P<SpaceObject> other) override { return true; }
+    virtual int getHackingDifficulty() const override;
     virtual bool hasShield() override;
     virtual string getCallSign() override { return callsign; }
     virtual void takeDamage(float damage_amount, DamageInfo info) override;

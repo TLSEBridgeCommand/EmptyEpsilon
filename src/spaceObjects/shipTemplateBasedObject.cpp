@@ -126,6 +126,13 @@ ShipTemplateBasedObject::ShipTemplateBasedObject(float collision_range, string m
 
 }
 
+int ShipTemplateBasedObject::getHackingDifficulty() const
+{
+    if (*ship_template == nullptr)
+        return 0;
+    return ship_template->getHackingDifficulty();
+}
+
 void ShipTemplateBasedObject::drawShieldsOnRadar(sf::RenderTarget& window, sf::Vector2f position, float scale, float rotation, float sprite_scale, bool show_levels)
 {
     if (!getShieldsActive())

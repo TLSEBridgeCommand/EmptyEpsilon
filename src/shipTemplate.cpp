@@ -149,6 +149,7 @@ REGISTER_SCRIPT_CLASS(ShipTemplate)
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setImpulseSoundFile);
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setCanScan);
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setCanHack);
+    REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setHackingDifficulty);
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setCanDock);
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setCanCombatManeuver);
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplate, setCanSelfDestruct);
@@ -572,6 +573,12 @@ void ShipTemplate::setRestocksScanProbes(bool enabled)
     restocks_scan_probes = enabled;
 }
 
+void ShipTemplate::setHackingDifficulty(int difficulty)
+{
+    if (difficulty >= 0 && difficulty <= 4)
+        hacking_difficulty = difficulty;
+}
+
 void ShipTemplate::setHasReactor(bool hasReactor)
 {
     has_reactor = hasReactor;
@@ -698,6 +705,7 @@ P<ShipTemplate> ShipTemplate::copy(string new_name)
 
     result->can_scan = can_scan;
     result->can_hack = can_hack;
+    result->hacking_difficulty = hacking_difficulty;
     result->can_dock = can_dock;
     result->can_combat_maneuver = can_combat_maneuver;
     result->can_self_destruct = can_self_destruct;

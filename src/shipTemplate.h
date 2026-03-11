@@ -123,6 +123,7 @@ public:
     bool restocks_missiles_docked;
     bool can_scan = true;
     bool can_hack = true;
+    int hacking_difficulty = 0;
     bool can_dock = true;
     bool can_combat_maneuver = true;
     bool can_self_destruct = true;
@@ -187,6 +188,8 @@ public:
     void setRestocksMissilesDocked(bool enabled);
     void setCanScan(bool enabled) { can_scan = enabled; }
     void setCanHack(bool enabled) { can_hack = enabled; }
+    void setHackingDifficulty(int difficulty);
+    int getHackingDifficulty() const { return hacking_difficulty; }
     void setCanDock(bool enabled) { can_dock = enabled; }
     void setCanCombatManeuver(bool enabled) { can_combat_maneuver = enabled; }
     void setCanSelfDestruct(bool enabled) { can_self_destruct = enabled; }

@@ -259,6 +259,7 @@ public:
     void setScannedByFaction(string faction_name, bool scanned);
     virtual void scannedBy(P<SpaceObject> other);
     virtual bool canBeHackedBy(P<SpaceObject> other);
+    virtual int getHackingDifficulty() const;
     virtual std::vector<std::pair<string, float> > getHackingTargets();
     virtual void hackFinished(P<SpaceObject> source, string target, float value);
     virtual void takeDamage(float damage_amount, DamageInfo info);

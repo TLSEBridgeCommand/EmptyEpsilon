@@ -459,6 +459,11 @@ bool SpaceObject::canBeHackedBy(P<SpaceObject> other)
     return false;
 }
 
+int SpaceObject::getHackingDifficulty() const
+{
+    return -1;
+}
+
 std::vector<std::pair<string, float> > SpaceObject::getHackingTargets()
 {
     return std::vector<std::pair<string, float> >();
