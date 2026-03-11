@@ -229,20 +229,8 @@ void GuiCommsOverlay::onDraw(sf::RenderTarget& window)
         script_comms_box->setVisible(my_spaceship->isCommsScriptOpen());
         script_comms_text->setText(my_spaceship->getCommsIncommingMessage());
         
-        // Set the title label for script comms - only show when comms are fully established
-        if (my_spaceship->isCommsScriptOpen())
-        {
-            // Only show title if we have an actual message (not just the initial "established link" message)
-            string message = my_spaceship->getCommsIncommingMessage();
-            if (message.find("Opened comms with") == string::npos && message.find("Opened comms to") == string::npos)
-            {
-                script_comms_title_label->setText(my_spaceship->getCallSign() + " - Communicating with " + my_spaceship->getCommsTargetName());
-            }
-            else
-            {
-                script_comms_title_label->setText("");
-            }
-        }
+        // No title on script comms (buttons/reply-options view) - title only on chat comms where you can enter text
+        script_comms_title_label->setText("");
 
         // Show the scripted comms options. If they've changed, update the lsit
         bool changed = script_comms_options->entryCount() != int(my_spaceship->getCommsReplyOptions().size());
