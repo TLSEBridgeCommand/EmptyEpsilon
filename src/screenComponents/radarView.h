@@ -70,6 +70,7 @@ private:
     bool show_missile_tubes;
     bool show_callsigns;
     bool show_gm_callsigns;
+    bool show_gm_waypoints;
     bool show_heading_indicators;
     bool show_game_master_data;
     float range_indicator_step_size;
@@ -111,6 +112,8 @@ public:
     GuiRadarView* disableGMCallsigns() { show_gm_callsigns = false; return this; }
     GuiRadarView* showGMCallsigns(bool value) { show_gm_callsigns = value; return this; }
     bool getGMCallsigns() { return show_gm_callsigns; }
+    GuiRadarView* showGMWaypoints(bool value) { show_gm_waypoints = value; return this; }
+    bool getGMWaypoints() { return show_gm_waypoints; }
     GuiRadarView* enableHeadingIndicators() { show_heading_indicators = true; return this; }
     GuiRadarView* disableHeadingIndicators() { show_heading_indicators = false; return this; }
     GuiRadarView* gameMaster() { show_game_master_data = true; return this; }
@@ -152,6 +155,7 @@ private:
     void drawGhostDots(sf::RenderTarget& window);
     void drawWaypoints(sf::RenderTarget& window);
     void drawRoutes(sf::RenderTarget& window);
+    void drawGMWaypointsAndRoutes(sf::RenderTarget& window);
     void drawRangeIndicators(sf::RenderTarget& window);
     void drawTargetProjections(sf::RenderTarget& window);
     void drawMissileTubes(sf::RenderTarget& window);

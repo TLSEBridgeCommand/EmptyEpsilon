@@ -531,6 +531,9 @@ void GameMasterScreen::onKey(sf::Event::KeyEvent key, int unicode)
     case sf::Keyboard::C:
         main_radar->showGMCallsigns(!main_radar->getGMCallsigns());
         break;
+    case sf::Keyboard::W:
+        main_radar->showGMWaypoints(!main_radar->getGMWaypoints());
+        break;
     default:
         break;
     }
