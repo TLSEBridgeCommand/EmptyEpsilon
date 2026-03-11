@@ -92,6 +92,10 @@ void PlayerInfo::commandSetShipId(int32_t id)
     sf::Packet packet;
     packet << CMD_UPDATE_SHIP_ID << id;
     sendClientCommand(packet);
+    // Optimistic update for local player so my_spaceship resolves immediately (avoids
+    // waiting for replication before autoconnect can spawn the station UI).
+    if (my_player_info == this)
+        ship_id = id;
 }
 
 void PlayerInfo::commandSetMainScreen(bool enabled)

@@ -163,8 +163,10 @@ void GameGlobalInfo::update(float delta)
                 my_spaceship = game_client->getObjectById(my_player_info->ship_id);
         }
 
-        // NEW: If UI spawn is pending and my_spaceship is now valid, spawn UI
+        // If UI spawn is pending and my_spaceship is now valid, spawn UI (e.g. after autoconnect).
+        // Clear the flag so we only spawn once.
         if (my_player_info->ui_spawn_pending && my_spaceship) {
+            my_player_info->ui_spawn_pending = false;
             my_player_info->spawnUI();
         }
     }

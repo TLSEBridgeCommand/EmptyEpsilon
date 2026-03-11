@@ -30,7 +30,7 @@ class AutoConnectScreen : public GuiCanvas, public Updatable
     float update_timer;
 public:
     AutoConnectScreen(ECrewPosition crew_position, int auto_mainscreen, bool control_main_screen, string ship_filter);
-    void autoConnectPasswordEntryOnOkClick();
+    void autoConnectPasswordEntryOnOkClick(P<PlayerSpaceship> ship = nullptr);
     void autoConnectPasswordEntryOnEnter(string text);
     virtual ~AutoConnectScreen();
 

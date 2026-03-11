@@ -323,6 +323,7 @@ int main(int argc, char** argv)
 //     new DiscordRichPresence();
 // #endif
 
+    PreferencesManager::set("autoconnect_session_done", "0");
     returnToMainMenu();
     engine->runMainLoop();
 
@@ -351,6 +352,8 @@ int main(int argc, char** argv)
         PreferencesManager::set("automainscreen", "");
     if (PreferencesManager::get("autostationslist").empty())
         PreferencesManager::set("autostationslist", "");
+    if (PreferencesManager::get("autoconnect_ship_index").empty())
+        PreferencesManager::set("autoconnect_ship_index", "1");
 
     // Set shaders to default.
     PreferencesManager::set("disable_shaders", PostProcessor::isEnabled() ? 0 : 1);
@@ -403,12 +406,18 @@ void returnToMainMenu()
         if (PreferencesManager::get("startpaused") != "1")
             engine->setGameSpeed(1.0);
     }
-    else if (PreferencesManager::get("autoconnect").toInt())
+    else if (PreferencesManager::get("autoconnect").toInt() && PreferencesManager::get("autoconnect_session_done", "0") != "1")
     {
+        // Autoconnect only on first connect this session; after ESC/return use ship selection.
         int crew_position = PreferencesManager::get("autoconnect").toInt() - 1;
         if (crew_position < 0) crew_position = 0;
         if (crew_position > max_crew_positions) crew_position = max_crew_positions;
         new AutoConnectScreen(ECrewPosition(crew_position), PreferencesManager::get("automainscreen").toInt(), PreferencesManager::get("autocontrolmainscreen").toInt(), PreferencesManager::get("autoconnectship", "solo"));
+    }
+    else if (PreferencesManager::get("autoconnect").toInt() && PreferencesManager::get("autoconnect_session_done", "0") == "1")
+    {
+        PreferencesManager::set("autoconnect_session_done", "0");
+        new ShipSelectionScreen();
     }
     else if (PreferencesManager::get("touchcalib").toInt())
     {
