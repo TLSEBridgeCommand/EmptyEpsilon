@@ -4,7 +4,17 @@
 ScenarioInfo::ScenarioInfo(string filename)
 {
     this->filename = filename;
-    name = filename.substr(9, -4);
+    // Support paths with folder prefix (e.g. "folder/scenario_foo.lua").
+    string basename = filename;
+    int last_slash = filename.rfind("/");
+    if (last_slash < 0)
+        last_slash = filename.rfind("\\");
+    if (last_slash >= 0)
+        basename = filename.substr(last_slash + 1);
+    if (basename.startswith("scenario_") && basename.endswith(".lua"))
+        name = basename.substr(9, -4);
+    else
+        name = basename;
 
     P<ResourceStream> stream = getResourceStream(filename);
     if (!stream)

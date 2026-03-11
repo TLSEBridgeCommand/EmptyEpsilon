@@ -14,6 +14,7 @@
 #include "gui/gui2_listbox.h"
 #include "gui/gui2_panel.h"
 #include "gui/gui2_scrolltext.h"
+#include "gui/gui2_button.h"
 #include "scenarioInfo.h"
 #include "main.h"
 
@@ -160,13 +161,23 @@ ServerCreationScreen::ServerCreationScreen()
     }))->setValue(gameGlobalInfo->use_system_damage)->setSize(275, GuiElement::GuiSizeMax)->setPosition(0, 0, ACenterRight);
 
     // Right column contents.
-    // Scenario section.
-    (new GuiLabel(right_panel, "SCENARIO_LABEL", tr("Scenario"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
-    // List each scenario derived from scenario_*.lua files in Resources.
-    GuiListbox* scenario_list = new GuiListbox(right_panel, "SCENARIO_LIST", [this](int index, string value) {
-        selectScenario(value);
+    // Scenario section (label text updated in showFolderList / showScenarioList).
+    scenario_label = new GuiLabel(right_panel, "SCENARIO_LABEL", tr("Category Selection"), 30);
+    scenario_label->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    // Back button (visible when viewing scenarios inside a folder).
+    back_button = new GuiButton(right_panel, "SCENARIO_BACK", tr("Back to folders"), [this]() {
+        showFolderList();
     });
-    scenario_list->setSize(GuiElement::GuiSizeMax, 300);
+    back_button->setSize(GuiElement::GuiSizeMax, 40);
+    back_button->setVisible(false);
+    // List: first shows folders, then scenarios in the selected folder.
+    scenario_list = new GuiListbox(right_panel, "SCENARIO_LIST", [this](int index, string value) {
+        if (viewing_folders)
+            showScenarioList(value);
+        else
+            selectScenario(value);
+    });
+    scenario_list->setSize(GuiElement::GuiSizeMax, 260);
 
     // Show the scenario description text.
     GuiPanel* panel = new GuiPanel(right_panel, "SCENARIO_DESCRIPTION_BOX");
@@ -205,31 +216,77 @@ ServerCreationScreen::ServerCreationScreen()
         startScenario();
     }))->setPosition(0, -50, ABottomCenter)->setSize(300, 50);
 
-    // Fetch and sort all Lua files starting with "scenario_".
-    std::vector<string> scenario_filenames = findResources("scenario_*.lua");
+    // Fetch all scenario_*.lua files (root and in any subfolder). Engine matches pattern against full path.
+    std::vector<string> scenario_filenames = findResources("*scenario_*.lua");
     std::sort(scenario_filenames.begin(), scenario_filenames.end());
-    // remove duplicates
     scenario_filenames.erase(std::unique(scenario_filenames.begin(), scenario_filenames.end()), scenario_filenames.end());
 
-    // We select the same mission as we had previously selected
-    // unless that one doesnt exist in which case we select the first by default
-    int mission_selected = 0;
-    // For each scenario file, extract its name, then add it to the list.
-    for(string filename : scenario_filenames)
+    // Group by folder: path before last "/" or "\\", or "" for root.
+    scenarios_by_folder.clear();
+    for (string filename : scenario_filenames)
     {
-        ScenarioInfo info(filename);
-        scenario_list->addEntry(info.name, filename);
-        if (info.name == gameGlobalInfo->scenario)
-        {
-            mission_selected=scenario_list->entryCount()-1;
-        }
+        int last_slash = filename.rfind("/");
+        if (last_slash < 0)
+            last_slash = filename.rfind("\\");
+        string folder = (last_slash >= 0) ? filename.substr(0, last_slash) : "";
+        scenarios_by_folder[folder].push_back(filename);
     }
 
+    // Ordered list of folders (root first, then alphabetical).
+    folder_names_ordered.clear();
+    if (scenarios_by_folder.find("") != scenarios_by_folder.end())
+        folder_names_ordered.push_back("");
+    for (std::pair<const string, std::vector<string> >& p : scenarios_by_folder)
+    {
+        if (p.first != "")
+            folder_names_ordered.push_back(p.first);
+    }
+    if (folder_names_ordered.size() > 1 && folder_names_ordered[0] == "")
+        std::sort(folder_names_ordered.begin() + 1, folder_names_ordered.end());
+    else
+        std::sort(folder_names_ordered.begin(), folder_names_ordered.end());
+
+    viewing_folders = true;
+    showFolderList();
+    gameGlobalInfo->reset();
+}
+
+void ServerCreationScreen::showFolderList()
+{
+    viewing_folders = true;
+    scenario_label->setText(tr("Category Selection"));
+    back_button->setVisible(false);
+    scenario_list->setOptions({}, {});
+    for (string folder : folder_names_ordered)
+    {
+        string display = (folder == "") ? tr("(Root)") : folder;
+        scenario_list->addEntry(display, folder);
+    }
+    scenario_list->setSelectionIndex(0);
+    scenario_list->scrollTo(0);
+    scenario_description->setText(tr("Select a folder to see its scenarios."));
+}
+
+void ServerCreationScreen::showScenarioList(const string& folder_path)
+{
+    viewing_folders = false;
+    string category_name = (folder_path == "") ? tr("(Root)") : folder_path;
+    scenario_label->setText(category_name + " " + tr("Scenarios"));
+    back_button->setVisible(true);
+    scenario_list->setOptions({}, {});
+
+    std::vector<string>& files = scenarios_by_folder[folder_path];
+    int mission_selected = 0;
+    for (size_t i = 0; i < files.size(); i++)
+    {
+        ScenarioInfo info(files[i]);
+        scenario_list->addEntry(info.name, files[i]);
+        if (info.name == gameGlobalInfo->scenario)
+            mission_selected = (int)i;
+    }
     scenario_list->setSelectionIndex(mission_selected);
     scenario_list->scrollTo(mission_selected);
     selectScenario(scenario_list->getSelectionValue());
-
-    gameGlobalInfo->reset();
 }
 
 void ServerCreationScreen::selectScenario(string filename)
