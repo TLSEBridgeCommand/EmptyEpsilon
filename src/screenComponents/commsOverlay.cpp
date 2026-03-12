@@ -216,7 +216,9 @@ void GuiCommsOverlay::onDraw(sf::RenderTarget& window)
         {
             // Only show title if we have an actual message (not just the initial "established link" message)
             string message = my_spaceship->getCommsIncommingMessage();
-            if (message.find("Opened comms with") == string::npos && message.find("Opened comms to") == string::npos)
+            string::size_type pos_with = message.find("Opened comms with");
+            string::size_type pos_to = message.find("Opened comms to");
+            if (pos_with == string::npos && pos_to == string::npos)
             {
                 chat_comms_title_label->setText(my_spaceship->getCallSign() + " - Communicating with " + my_spaceship->getCommsTargetName());
             }

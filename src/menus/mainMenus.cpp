@@ -61,10 +61,8 @@ public:
 
 MainMenu::MainMenu()
 {
-    constexpr float logo_size = 256;
     constexpr float logo_size_y = 256;
     constexpr float logo_size_x = 1024;
-    constexpr float bc_size = 500;
     constexpr float title_y = 160;
 
     new GuiOverlay(this, "", colorConfig.background);

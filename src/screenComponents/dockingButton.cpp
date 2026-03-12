@@ -138,7 +138,7 @@ P<SpaceObject> GuiDockingButton::findDockingTarget()
     {
         dock_object = obj;
         P<SpaceShip> dock_ship = dock_object;
-        if (dock_ship && dock_ship->getDockingState() == 1 || dock_ship && dock_ship->getDockedWith() == target_spaceship)
+        if ((dock_ship && dock_ship->getDockingState() == 1) || (dock_ship && dock_ship->getDockedWith() == target_spaceship))
         {
             dock_object = NULL;
             continue;

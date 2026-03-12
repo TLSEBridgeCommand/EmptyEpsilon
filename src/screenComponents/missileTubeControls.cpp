@@ -47,8 +47,6 @@ GuiMissileTubeControls::GuiMissileTubeControls(GuiContainer* owner, string id, P
             if (target_spaceship->weapon_tube[n].isLoaded())
             {
                 float target_angle = missile_target_angle;
-                //NB look  bool
-                bool lock_successful = target_angle != std::numeric_limits<float>::infinity();
                 if (!manual_aim)
                 {
                     //NB changed my_spaceship to target_spaceship so drones also target properly
