@@ -42,7 +42,7 @@ HelmsScreen::HelmsScreen(GuiContainer* owner)
     combat_maneuver->setPosition(-20, -20, ABottomRight)->setSize(280, 215)->setVisible(my_spaceship && my_spaceship->getCanCombatManeuver());
     
     radar->setPosition(0, 0, ACenter)->setSize(GuiElement::GuiSizeMatchHeight, 800);
-    radar->setRangeIndicatorStepSize(1000.0)->shortRange()->enableGhostDots()->enableWaypoints()->enableCallsigns()->enableHeadingIndicators()->setStyle(GuiRadarView::Circular);
+    radar->setRangeIndicatorStepSize(1000.0)->shortRange()->enableGhostDots()->enableWaypoints()->enableRoutes()->enableCallsigns()->enableHeadingIndicators()->setStyle(GuiRadarView::Circular);
     radar->enableMissileTubeIndicators();
     radar->setCallbacks(
         [this](sf::Vector2f position) {
