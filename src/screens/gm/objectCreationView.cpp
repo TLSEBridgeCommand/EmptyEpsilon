@@ -120,7 +120,7 @@ GuiObjectCreationView::GuiObjectCreationView(GuiContainer* owner)
     std::sort(template_names.begin(), template_names.end());
     cpu_ship_listbox = new GuiListbox(box, "CREATE_SHIPS", [this](int index, string value)
     {
-        setCreateScript("CpuShip():setRotation(random(0, 360)):setFactionId(" + string(faction_selector->getSelectionIndex()) + "):setTemplate(\"" + value + "\"):orderRoaming()");
+        setCreateScript("CpuShip():setRotation(random(0, 360)):setFactionId(" + string(faction_selector->getSelectionIndex()) + "):setTemplate(\"" + value + "\"):orderIdle()");
     });
     cpu_ship_listbox->setTextSize(20)->setButtonHeight(30)->setPosition(-20, 20, ATopRight)->setSize(300, 460);
     for(string template_name : template_names)
