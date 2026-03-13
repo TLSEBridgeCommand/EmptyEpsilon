@@ -89,7 +89,7 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
     info_type->setSize(GuiElement::GuiSizeMax, 30);
     info_shields = new GuiKeyValueDisplay(left_col, "SCIENCE_SHIELDS", 0.4, tr("science", "Shields"), "");
     info_shields->setSize(GuiElement::GuiSizeMax, 30);
-    info_hull = new GuiKeyValueDisplay(left_col, "SCIENCE_HULL", 0.4, tr("science", "Hull"), "");
+    info_hull = new GuiKeyValueDisplay(left_col, "SCIENCE_HULL", 0.4, tr("science", "Hull Exterior"), "");
     info_hull->setSize(GuiElement::GuiSizeMax, 30);
 
     (new GuiLabel(left_col, "TITLE", tr("Description"), 30))
@@ -139,6 +139,11 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
         info_system[n]->setSize(GuiElement::GuiSizeMax, 30);
         info_system[n]->hide();
     }
+    info_system_no_data = new GuiLabel(center_col, "SYS_NO_DATA", tr("Frequencies", "No Data"), 35);
+    info_system_no_data->setAlignment(ACenter);
+    info_system_no_data->setPosition(0, 0, ABottomCenter);
+    info_system_no_data->setSize(GuiElement::GuiSizeMax, 300);
+    info_system_no_data->hide();
     
     // Advanced scan data.
     (new GuiLabel(right_col, "TITLE", tr("Frequencies"), 30))
@@ -158,6 +163,10 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
         info_shield_frequency->hide();
         info_beam_frequency->hide();
     }
+    info_frequency_no_data = new GuiLabel(right_col, "FREQUENCY_NO_DATA", tr("Frequencies", "No Data"), 35);
+    info_frequency_no_data->setSize(GuiElement::GuiSizeMax, 300);
+    info_frequency_no_data->setAlignment(ACenter);
+    info_frequency_no_data->hide();
 
     (new GuiLabel(right_col, "TITLE", tr("Signatures"), 30))
         ->addBackground()
@@ -181,8 +190,30 @@ TargetAnalysisScreen::TargetAnalysisScreen(GuiContainer *owner)
     info_biological_signal_label->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
 }
 
+void TargetAnalysisScreen::clearAnalysisData()
+{
+    for (int n = 0; n < SYS_COUNT; n++)
+        info_system[n]->hide();
+    info_system_no_data->show();
+    for (int n = 0; n < 30; n++)
+        info_template[n]->hide();
+
+    for (int n = 0; n < 10; n++)
+        info_other[n]->hide();
+
+    info_shields->setValue("");
+    info_hull->setValue("");
+    info_type->setValue("");
+    info_shield_frequency->hide();
+    info_beam_frequency->hide();
+    info_frequency_no_data->show();
+    model->hide();
+    selected_entry = nullptr;
+}
+
 void TargetAnalysisScreen::onDraw(sf::RenderTarget &window)
 {
+    clearAnalysisData();
     GuiOverlay::onDraw(window);
     if (my_spaceship)
     {
@@ -223,18 +254,21 @@ void TargetAnalysisScreen::onDraw(sf::RenderTarget &window)
             {
                 info_type->setValue(tr("Asteroid"));
                 model->setModel(ModelData::getModel("Astroid_" + string(asteroid->model_number)));
+                model->show();
             }
             
             if (artifact)
             {
                 info_type->setValue(tr("Unknown"));
                 model->setModel(ModelData::getModel(artifact->current_model_data_name));
+                model->show();
             }
             
             if (planet)
             {
                 info_type->setValue(tr("Planet"));
                 model->setModel(ModelData::getModel(planet->getPlanetSurfaceTexture()));
+                model->show();
             }
             
             if (shipTemplate)
@@ -242,6 +276,7 @@ void TargetAnalysisScreen::onDraw(sf::RenderTarget &window)
                 selected_entry = findDatabaseEntry(shipTemplate->getTypeName());
                 if (selected_entry){
                     model->setModel(selected_entry->getModelData());
+                    model->show();
 
                     for(int n = 0; n < 30; n++)
                         info_template[n]->hide();
@@ -286,9 +321,12 @@ void TargetAnalysisScreen::onDraw(sf::RenderTarget &window)
             
             if (ship)
             {
+                info_frequency_no_data -> hide();
+                info_shield_frequency->show();
+                info_beam_frequency->show();
                 info_shield_frequency->setFrequency(ship->shield_frequency);
                 info_beam_frequency->setFrequency(ship->beam_frequency);
-            
+                info_system_no_data->hide();
                 for(int n = 0; n < SYS_COUNT; n++)
                     info_system[n]->hide();
                 for(int n = 0; n < SYS_COUNT; n++)

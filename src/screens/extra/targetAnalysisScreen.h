@@ -50,6 +50,8 @@ class TargetAnalysisScreen : public GuiOverlay
     GuiLabel* info_biological_signal_label;
     GuiFrequencyCurve* info_shield_frequency;
     GuiFrequencyCurve* info_beam_frequency;
+    GuiLabel* info_frequency_no_data;
+    GuiLabel* info_system_no_data;
     GuiKeyValueDisplay* info_system[SYS_COUNT];
     GuiKeyValueDisplay* info_other[10];
     GuiKeyValueDisplay* info_template[30];
@@ -59,6 +61,7 @@ class TargetAnalysisScreen : public GuiOverlay
 
   public:
     TargetAnalysisScreen(GuiContainer *owner);
+    void clearAnalysisData();
     void onDraw(sf::RenderTarget &window) override;
     P<ScienceDatabase> findDatabaseEntry(string name);
 };
