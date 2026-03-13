@@ -12,12 +12,15 @@ class WormHole : public SpaceObject, public Updatable
     P<PathPlannerManager>  pathPlanner;
 
     int radar_visual;
+    int texture;
     static const int cloud_count = 5;
     NebulaCloud clouds[cloud_count];
 
     ScriptSimpleCallback on_teleportation;
 public:
     WormHole();
+    P<WormHole> setTexture(string texture_name);
+    std::string custom_texture;
 
 #if FEATURE_3D_RENDERING
     virtual void draw3DTransparent() override;

@@ -22,11 +22,12 @@ REGISTER_SCRIPT_SUBCLASS(WormHole, SpaceObject)
     /// Set a function that will be called if a SpaceObject is teleported.
     /// First argument given to the function will be the WormHole, the second the SpaceObject that has been teleported.
     REGISTER_SCRIPT_CLASS_FUNCTION(WormHole, onTeleportation);
+    REGISTER_SCRIPT_CLASS_FUNCTION(WormHole, setTexture);
 }
 
 REGISTER_MULTIPLAYER_CLASS(WormHole, "WormHole");
 WormHole::WormHole()
-: SpaceObject(DEFAULT_COLLISION_RADIUS, "WormHole")
+: SpaceObject(DEFAULT_COLLISION_RADIUS, "WormHole"),custom_texture("") 
 {
     pathPlanner = PathPlannerManager::getInstance();
     pathPlanner->addAvoidObject(this, (DEFAULT_COLLISION_RADIUS * AVOIDANCE_MULTIPLIER) );
@@ -46,6 +47,12 @@ WormHole::WormHole()
     }
 }
 
+P<WormHole> WormHole::setTexture(string texture_name)
+{
+    custom_texture = texture_name;
+    return this;
+}
+
 #if FEATURE_3D_RENDERING
 void WormHole::draw3DTransparent()
 {
@@ -63,7 +70,17 @@ void WormHole::draw3DTransparent()
         if (alpha < 0.0)
             continue;
 
-        ShaderManager::getShader("billboardShader")->setUniform("textureMap", *textureManager.getTexture("wormHole" + string(cloud.texture) + ".png"));
+            string tex;
+            if (!custom_texture.empty())
+            {
+                tex = custom_texture;
+            }
+            else
+            {
+                tex = "wormHole" + string(cloud.texture) + ".png";
+            }
+    
+        ShaderManager::getShader("billboardShader")->setUniform("textureMap", *textureManager.getTexture(tex));
         sf::Shader::bind(ShaderManager::getShader("billboardShader"));
         glBegin(GL_QUADS);
         glColor4f(alpha * 0.8, alpha * 0.8, alpha * 0.8, size);
@@ -84,7 +101,16 @@ void WormHole::draw3DTransparent()
 void WormHole::drawOnRadar(sf::RenderTarget& window, sf::Vector2f position, float scale, float rotation, bool long_range)
 {
     sf::Sprite object_sprite;
-    textureManager.setTexture(object_sprite, "wormHole" + string(radar_visual) + ".png");
+    string tex;
+    if (!custom_texture.empty())
+    {
+        tex = custom_texture;
+    }
+    else
+    {
+        tex = "wormHole" + string(radar_visual) + ".png";
+    }
+    textureManager.setTexture(object_sprite, tex);
     object_sprite.setRotation(getRotation());
     object_sprite.setPosition(position);
     float size = getRadius() * scale / object_sprite.getTextureRect().width * 3.0;
