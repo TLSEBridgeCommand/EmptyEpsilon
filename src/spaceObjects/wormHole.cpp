@@ -70,15 +70,15 @@ void WormHole::draw3DTransparent()
         if (alpha < 0.0)
             continue;
 
-            string tex;
-            if (!custom_texture.empty())
-            {
-                tex = custom_texture;
-            }
-            else
-            {
-                tex = "wormHole" + string(cloud.texture) + ".png";
-            }
+        string tex;
+        if (!custom_texture.empty())
+        {
+            tex = custom_texture;
+        }
+        else
+        {
+            tex = "wormHole" + string(cloud.texture) + ".png";
+        }
     
         ShaderManager::getShader("billboardShader")->setUniform("textureMap", *textureManager.getTexture(tex));
         sf::Shader::bind(ShaderManager::getShader("billboardShader"));

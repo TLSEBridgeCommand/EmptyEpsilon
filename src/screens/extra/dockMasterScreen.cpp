@@ -314,13 +314,14 @@ void DockMasterScreen::onDraw(sf::RenderTarget &window)
             if (dockData.dock_type != Dock_Disabled)
             {
                 string dockType = getDockTypeName(dockData.dock_type);
+                string dockNumber = string(n + 1);
                 string state;
 
                 if (dockData.state == Docked)
                  {
                      P<Cargo> cargo = dockData.getCargo();
                      state = getDockStateName(dockData.state);
- 
+
                      if (cargo)
                      {
                          for (auto e : cargo->getEntries())
