@@ -297,7 +297,7 @@ void fillDefaultDatabaseData()
                 case FVF_Enemy: stance = tr("stance", "Enemy"); break;
                 case FVF_Friendly: stance = tr("stance", "Friendly"); break;
             }
-            entry->addKeyValue(factionInfo[m]->getLocaleName(), stance);
+            // entry->addKeyValue(factionInfo[m]->getLocaleName(), stance);
         }
         entry->setLongDescription(factionInfo[n]->getDescription());
     }
