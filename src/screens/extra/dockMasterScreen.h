@@ -82,7 +82,6 @@ class DockMasterScreen : public GuiOverlay
 
   public:
     DockMasterScreen(GuiContainer *owner);
-
     void onDraw(sf::RenderTarget &window) override;
   private:
     void selectDock(int index);

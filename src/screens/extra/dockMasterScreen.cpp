@@ -314,11 +314,32 @@ void DockMasterScreen::onDraw(sf::RenderTarget &window)
             if (dockData.dock_type != Dock_Disabled)
             {
                 string dockType = getDockTypeName(dockData.dock_type);
-                string dockNumber = std::to_string(n + 1);
-                string state = getDockStateName(dockData.state);
-                docks->setEntryName(n, dockType + " - " + dockNumber + " (" + state + ")");
+                string state;
+
+                if (dockData.state == Docked)
+                 {
+                     P<Cargo> cargo = dockData.getCargo();
+                     state = getDockStateName(dockData.state);
+ 
+                     if (cargo)
+                     {
+                         for (auto e : cargo->getEntries())
+                         {
+                             if (std::get<1>(e) == tr("Model"))
+                             {
+                                 state = std::get<2>(e);
+                                 break;
+                             }
+                         }
+                     }
+                 }
+                 else
+                 {
+                     state = getDockStateName(dockData.state);
+                 }
+                  docks->setEntryName(n, dockType + " - " + dockNumber + " (" + state + ")");
                 if (n != index)
-                    action_move_selector->addEntry(dockType + " - " + dockNumber, string(n));
+                action_move_selector->addEntry(dockType + " - " + dockNumber, string(n));
             }
         }
 

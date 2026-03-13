@@ -103,6 +103,20 @@ ScienceScreen::ScienceScreen(GuiContainer* owner, ECrewPosition crew_position)
     info_relspeed->setSize(GuiElement::GuiSizeMax, 30);
     info_faction = new GuiKeyValueDisplay(info_sidebar, "SCIENCE_FACTION", 0.4, tr("Faction"), "");
     info_faction->setSize(GuiElement::GuiSizeMax, 30);
+    info_faction_button = new GuiButton(info_faction, "SCIENCE_FACTION_BUTTON", tr("database", "DB"), [this]() {
+        P<ShipTemplateBasedObject> shipTemplate = targets.get();
+        if (shipTemplate)
+        {
+            if (database_view->findAndDisplayEntry(shipTemplate->getFaction()))
+            {
+                view_mode_selection->setSelectionIndex(1);
+                radar_view->hide();
+                background_gradient->hide();
+                database_view->show();
+            }
+        }
+    });
+    info_faction_button->setTextSize(20)->setPosition(0, 1, ATopLeft)->setSize(50, 28);
     info_type = new GuiKeyValueDisplay(info_sidebar, "SCIENCE_TYPE", 0.4, tr("science","Type"), "");
     info_type->setSize(GuiElement::GuiSizeMax, 30);
     info_type_button = new GuiButton(info_type, "SCIENCE_TYPE_BUTTON", tr("database", "DB"), [this]() {
@@ -328,6 +342,7 @@ void ScienceScreen::onDraw(sf::RenderTarget& window)
     info_gravity_signal_band->hide();
     info_biological_signal_band->hide();
     info_type_button->hide();
+    info_faction_button->hide();
     sidebar_pager->hide();
     link_to_analysis_button->disable();
 
@@ -402,6 +417,7 @@ void ScienceScreen::onDraw(sf::RenderTarget& window)
                 info_hull->setValue(int(ceil(shipTemplate->getHull())));
                 info_type->setValue(shipTemplate->getTypeName());
                 info_type_button->show();
+                info_faction_button->show();
                 info_shields->setValue(shipTemplate->getShieldDataString());
             }
             break;

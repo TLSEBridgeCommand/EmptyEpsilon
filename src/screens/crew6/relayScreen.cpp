@@ -315,7 +315,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     }
     }
 
-    (new GuiCustomShipFunctions(this, relayOfficer, "", my_spaceship))->setPosition(-20, 240, ATopRight)->setSize(250, GuiElement::GuiSizeMax);
+    (new GuiCustomShipFunctions(this, relayOfficer, "", my_spaceship))->setPosition(-20, 280, ATopRight)->setSize(250, GuiElement::GuiSizeMax);
 
     hacking_dialog = new GuiHackingDialog(this, "");
 
