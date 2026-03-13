@@ -24,7 +24,7 @@ Asteroid::Asteroid()
     hull = random(1, 15);
     model_number = irandom(1, 10);
     setRadarSignatureInfo(0.05, 0, 0);
-
+    addInfos(0, "Type", "Asteroid");
     registerMemberReplication(&z);
     registerMemberReplication(&size);
 

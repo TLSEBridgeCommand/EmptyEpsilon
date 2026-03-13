@@ -26,6 +26,9 @@ SupplyDrop::SupplyDrop()
 
     energy = 0.0;
     setRadarSignatureInfo(0.0, 0.1, 0.1);
+    setCallSign("Supply Drop");
+    addInfos(0, "Type", "Supplies");
+    setDescriptions("Supply Drop", "Typically contains fuel and ammunition");
 
     model_info.setData("ammo_box");
 }

@@ -30,6 +30,9 @@ WarpJammer::WarpJammer()
 
     jammer_list.push_back(this);
     setRadarSignatureInfo(0.05, 0.5, 0.0);
+    setCallSign("Warp Jammer");
+    addInfos(0, "Type", "Warp Jammer");
+    setDescriptions("Warp Jammer", "Prevents vessels in its vicinity from using their warp drive. Can be destroyed with weaponry.");
 
     registerMemberReplication(&range);
 

@@ -32,6 +32,9 @@ ScanProbe::ScanProbe()
     registerMemberReplication(&target_position);
     registerMemberReplication(&lifetime, 60.0);
     setRadarSignatureInfo(0.0, 0.2, 0.0);
+    addInfos(0, "Type", "Probe");
+    addInfos(1, "Lifespan", "10 min");
+    setDescriptions("Probe", "Allows owner to scan in its vicinity. Extremely fragile. Expires within 10 minutes.");
     model_info.setData("SensorBuoyMKIII");
     // switch(irandom(1, 3))
     // {

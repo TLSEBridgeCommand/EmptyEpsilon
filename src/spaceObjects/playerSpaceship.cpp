@@ -988,7 +988,7 @@ void PlayerSpaceship::takeHullDamage(float damage_amount, DamageInfo& info)
     SpaceShip::takeHullDamage(damage_amount, info);
     
     // Infos for engineering log
-    string system_damage = tr("{damage} hull damages. Affected systems: ").format({{"damage", string(abs(damage_amount))}});
+    string system_damage = tr("{damage} hull damage. Affected systems: ").format({{"damage", string(abs(damage_amount))}});
     for(int n=0; n<SYS_COUNT; n++)
     {
         if(systems_diff[n] != systems[n].health)
