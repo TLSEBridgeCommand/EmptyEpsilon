@@ -163,8 +163,8 @@ MainMenu::MainMenu()
     (new GuiLabel(this, "CREDITS25", "Mickael Houet", 18))->setAlignment(ACenterRight)->setPosition(-50, y, ATopRight)->setSize(0, 18); y += 18;
     (new GuiLabel(this, "CREDITS26", "Simon Morley", 18))->setAlignment(ACenterRight)->setPosition(-50, y, ATopRight)->setSize(0, 18); y += 18;
     (new GuiLabel(this, "CREDITS27", "Calum McLean", 18))->setAlignment(ACenterRight)->setPosition(-50, y, ATopRight)->setSize(0, 18); y += 18;
-    //NB adding a credit
-    (new GuiLabel(this, "CREDITS27", "Harry Jeffery", 18))->setAlignment(ACenterRight)->setPosition(-50, y, ATopRight)->setSize(0, 18); y += 18;
+    (new GuiLabel(this, "CREDITS28", "Harry Jeffery", 18))->setAlignment(ACenterRight)->setPosition(-50, y, ATopRight)->setSize(0, 18); y += 18;
+    (new GuiLabel(this, "CREDITS29", "Tim 'GIT' Jones", 18))->setAlignment(ACenterRight)->setPosition(-50, y, ATopRight)->setSize(0, 18); y += 18;
 
     if (PreferencesManager::get("instance_name") != "")
     {

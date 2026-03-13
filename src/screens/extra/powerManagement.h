@@ -2,6 +2,7 @@
 #define POWER_MANAGEMENT_H
 
 #include "gui/gui2_overlay.h"
+#include "gui/gui2_label.h"
 #include "shipTemplate.h"
 
 class GuiPanel;
@@ -19,12 +20,13 @@ private:
     float previous_energy_level;
     float average_energy_delta;
     ESystem selected_system = SYS_None;
-
     class SystemRow
     {
     public:
         GuiPanel* box;
+        GuiLabel* power_label;
         GuiSlider* power_slider;
+        GuiLabel* coolant_label;
         GuiSlider* coolant_slider;
         GuiProgressbar* heat_bar;
         GuiProgressbar* power_bar;

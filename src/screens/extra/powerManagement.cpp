@@ -10,6 +10,7 @@
 #include "gui/gui2_slider.h"
 #include "gui/gui2_progressbar.h"
 #include "gui/gui2_keyvaluedisplay.h"
+#include "screenComponents/powerDamageIndicator.h"
 
 PowerManagementScreen::PowerManagementScreen(GuiContainer* owner)
 : GuiOverlay(owner, "POWER_MANAGEMENT_SCREEN", colorConfig.background)
@@ -24,20 +25,20 @@ PowerManagementScreen::PowerManagementScreen(GuiContainer* owner)
     layout->setPosition(20, 60, ATopLeft)->setSize(GuiElement::GuiSizeMax, 400);
     for(int n=0; n<SYS_COUNT; n++)
     {
-        if (n == 6)
+        if (n == SYS_COUNT/2)
         {
             //Start the 2nd row after 4 (now 5) elements.
             layout = new GuiAutoLayout(this, "", GuiAutoLayout::LayoutHorizontalLeftToRight);
             layout->setPosition(20, 450, ATopLeft)->setSize(GuiElement::GuiSizeMax, 400);
         }
 
+
         GuiPanel* box = new GuiPanel(layout, "");
         systems[n].box = box;
         box->setSize(290, 400);
-
         (new GuiLabel(box, "", getLocaleSystemName(ESystem(n)), 30))->addBackground()->setAlignment(ACenter)->setPosition(0, 0, ATopLeft)->setSize(290, 50);
-        (new GuiLabel(box, "", "Power", 30))->setVertical()->setAlignment(ACenterLeft)->setPosition(20, 50, ATopLeft)->setSize(30, 340);
-        (new GuiLabel(box, "", "Coolant", 30))->setVertical()->setAlignment(ACenterLeft)->setPosition(100, 50, ATopLeft)->setSize(30, 340);
+        systems[n].power_label = (GuiLabel*) (new GuiLabel(box, "", "Power", 30))->setVertical()->setAlignment(ACenterLeft)->setPosition(20, 50, ATopLeft)->setSize(30, 340);
+        systems[n].coolant_label = (GuiLabel*) (new GuiLabel(box, "", "Coolant", 30))->setVertical()->setAlignment(ACenterLeft)->setPosition(100, 50, ATopLeft)->setSize(30, 340);
         (new GuiLabel(box, "", "Heat", 30))->setVertical()->setAlignment(ACenterLeft)->setPosition(180, 50, ATopLeft)->setSize(30, 340);
 
         systems[n].power_bar = new GuiProgressbar(box, "", 0.0, 3.0, 1.0);
@@ -60,6 +61,9 @@ PowerManagementScreen::PowerManagementScreen(GuiContainer* owner)
 
         systems[n].heat_bar = new GuiProgressbar(box, "", 0.0, 1.0, 0.0);
         systems[n].heat_bar->setPosition(210, 60, ATopLeft)->setSize(50, 320);
+        (new GuiPowerDamageIndicator(systems[n].box, "TARGET_SYSTEM_INDICATOR_" + string(n), ESystem(n), ACenterLeft, my_spaceship, false))
+        ->setPosition(0,4, ATopCenter)
+        ->setSize(280, 40);
     }
 
     (new GuiCustomShipFunctions(this, powerManagement, "", my_spaceship))->setPosition(-20, 120, ATopRight)->setSize(250, GuiElement::GuiSizeMax);
@@ -105,7 +109,25 @@ void PowerManagementScreen::onDraw(sf::RenderTarget& window)
 
             float heat = my_spaceship->systems[n].heat_level;
             float power = my_spaceship->systems[n].power_level;
+            float power_req = my_spaceship->systems[n].power_request;
             float coolant = my_spaceship->systems[n].coolant_level;
+            float coolant_req = my_spaceship->systems[n].coolant_request;
+            float coolant_percent = coolant*100 / my_spaceship->max_coolant_per_system;
+            float coolant_req_percent = coolant_req*100 / my_spaceship->max_coolant_per_system;
+
+            systems[n].coolant_label->setText(
+                    tr("Coolant: {coolant_level}% / {coolant_req}%").format(
+                        {{"coolant_level", string(coolant_percent, 0)},
+                         {"coolant_req", string(coolant_req_percent, 0)}}
+                     )
+            );
+            systems[n].power_label->setText(
+                tr("Power: {power_level}% / {power_req}%").format(
+                    {{"power_level", string(power*100, 0)},
+                     {"power_req", string(power_req*100, 0)}}
+                )
+            );
+
             systems[n].heat_bar->setValue(heat)->setColor(sf::Color(128, 128 * (1.0 - heat), 0));
             systems[n].power_bar->setValue(power)->setColor(sf::Color(255, 255, 0));
             systems[n].coolant_bar->setValue(coolant)->setColor(sf::Color(0,128,255));
