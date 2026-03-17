@@ -3,7 +3,6 @@
 #include "spaceObjects/playerSpaceship.h"
 #include "dockingButton.h"
 #include "screens/crew6/helmsScreen.h"
-#include "screens/crew1/singlePilotView.h"
 #include "gui/gui2_element.h"
 
 GuiDockingButton::GuiDockingButton(GuiContainer* owner, string id, P<PlayerSpaceship> targetSpaceship)
@@ -20,25 +19,27 @@ void GuiDockingButton::click()
     {
     case DS_NotDocking:
         {
-            // Show docking menu for both ships and drones (find HelmsScreen or SinglePilotView)
-            GuiContainer* owner = getOwner();
-            while (owner)
+            // For player drones, dock directly without showing menu
+            if (target_spaceship->ship_template && target_spaceship->ship_template->isShipCargo)
             {
+                target_spaceship->commandDock(findDockingTarget());
+            }
+            else
+            {
+                // For regular ships, show the docking menu
+                GuiContainer* owner = getOwner();
+                while (owner && !dynamic_cast<HelmsScreen*>(owner))
+                {
+                    GuiElement* element = dynamic_cast<GuiElement*>(owner);
+                    if (element)
+                        owner = element->getOwner();
+                    else
+                        break;
+                }
                 if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
                 {
                     helms_screen->showDockingMenu();
-                    break;
                 }
-                if (SinglePilotView* single_pilot = dynamic_cast<SinglePilotView*>(owner))
-                {
-                    single_pilot->showDockingMenu();
-                    break;
-                }
-                GuiElement* element = dynamic_cast<GuiElement*>(owner);
-                if (element)
-                    owner = element->getOwner();
-                else
-                    break;
             }
         }
         break;
@@ -107,25 +108,19 @@ void GuiDockingButton::onHotkey(const HotkeyResult& key)
         }
         else if (key.hotkey == "DOCK_REQUEST")
         {
-            // Find the docking menu (HelmsScreen or SinglePilotView) and show it
+            // Find the helms screen's docking menu and show it
             GuiContainer* owner = getOwner();
-            while (owner)
+            while (owner && !dynamic_cast<HelmsScreen*>(owner))
             {
-                if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
-                {
-                    helms_screen->showDockingMenu();
-                    break;
-                }
-                if (SinglePilotView* single_pilot = dynamic_cast<SinglePilotView*>(owner))
-                {
-                    single_pilot->showDockingMenu();
-                    break;
-                }
                 GuiElement* element = dynamic_cast<GuiElement*>(owner);
                 if (element)
                     owner = element->getOwner();
                 else
                     break;
+            }
+            if (HelmsScreen* helms_screen = dynamic_cast<HelmsScreen*>(owner))
+            {
+                helms_screen->showDockingMenu();
             }
         }
         else if (key.hotkey == "DOCK_ABORT")

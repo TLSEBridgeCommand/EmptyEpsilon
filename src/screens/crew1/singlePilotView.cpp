@@ -13,7 +13,6 @@
 #include "screenComponents/warpControls.h"
 #include "screenComponents/jumpControls.h"
 #include "screenComponents/dockingButton.h"
-#include "screenComponents/dockingMenu.h"
 
 #include "screenComponents/missileTubeControls.h"
 #include "screenComponents/aimLock.h"
@@ -100,8 +99,6 @@ SinglePilotView::SinglePilotView(GuiContainer* owner, P<PlayerSpaceship> targetS
     // Docking, comms, and shields buttons across top.
     docking_button = new GuiDockingButton(this, "DOCKING", target_spaceship);
     docking_button->setPosition(20, 20, ATopLeft)->setSize(250, 50);
-    docking_menu = new GuiDockingMenu(this, target_spaceship);
-    docking_menu->hide();
     if (target_spaceship == my_spaceship)
     {
         (new GuiOpenCommsButton(this, "OPEN_COMMS_BUTTON", tr("Open Comms"), &targets, target_spaceship))->setPosition(270, 20, ATopLeft)->setSize(250, 50);
@@ -128,16 +125,8 @@ void SinglePilotView::setTargetSpaceship(P<PlayerSpaceship> targetSpaceship){
     jump_controls->setTargetSpaceship(target_spaceship);
     docking_button->setTargetSpaceship(target_spaceship);
     shields_enable_button->setTargetSpaceship(target_spaceship);
-    if (docking_menu)
-        docking_menu->setTargetSpaceship(target_spaceship);
     lock_aim->setTargetSpaceship(target_spaceship);
     custom_ship_functions->setTargetSpaceship(target_spaceship);
-}
-
-void SinglePilotView::showDockingMenu()
-{
-    if (docking_menu)
-        docking_menu->show();
 }
 
 void SinglePilotView::onDraw(sf::RenderTarget& window)

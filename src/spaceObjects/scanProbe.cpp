@@ -49,7 +49,7 @@ ScanProbe::ScanProbe()
     //    break;
     // }
 
-    setCallSign(string("Probe ") + string(getMultiplayerId()));
+    setCallSign(string(getMultiplayerId()) + "P");
 }
 
 //due to a suspected compiler bug this deconstructor needs to be explicitly defined

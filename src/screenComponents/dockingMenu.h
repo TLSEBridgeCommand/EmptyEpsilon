@@ -23,7 +23,6 @@ private:
 public:
     GuiDockingMenu(GuiContainer* owner, P<PlayerSpaceship> targetSpaceship);
     
-    void setTargetSpaceship(P<PlayerSpaceship> targetSpaceship);
     virtual void onUpdate() override;
     void populateDockingTargets();
     void dockWithSelectedTarget();

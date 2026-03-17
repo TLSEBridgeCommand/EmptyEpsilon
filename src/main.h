@@ -20,12 +20,7 @@ extern RenderLayer* mouseLayer;
 extern PostProcessor* glitchPostProcessor;
 extern PostProcessor* warpPostProcessor;
 
-/** If from_disconnect is true, go to main menu (Start server/client). Otherwise respect autoconnect: first run shows AutoConnect, later returns show Ship Selection. */
-void returnToMainMenu(bool from_disconnect = false);
+void returnToMainMenu();
 void returnToShipSelection();
-
-/** Session-only: true after autoconnect has run once; return-to-menu then shows ship selection instead of AutoConnect. */
-void setAutoconnectSessionDone(bool done);
-bool isAutoconnectSessionDone();
 
 #endif//MAIN_H

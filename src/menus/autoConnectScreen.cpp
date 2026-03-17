@@ -15,7 +15,7 @@
 #include "../screenComponents/numericEntryPanel.h"
 
 AutoConnectScreen::AutoConnectScreen(ECrewPosition crew_position, int auto_mainscreen, bool control_main_screen, string ship_filter)
-: crew_position(crew_position), auto_mainscreen(auto_mainscreen) , control_main_screen(control_main_screen), update_timer(0.0f), ship_selection_delay(1.0f)
+: crew_position(crew_position), auto_mainscreen(auto_mainscreen) , control_main_screen(control_main_screen), update_timer(0.0f)
 {
     if (!game_client)
     {
@@ -81,8 +81,6 @@ void AutoConnectScreen::update(float delta)
         if (autoconnect_address != "") {
             status_label->setText(tr("autoconnect", "Using autoconnect server {address}").format({{"address", autoconnect_address}}));
             connect_to_address = autoconnect_address;
-            if (game_client)
-                disconnectFromServer();
             new GameClient(VERSION_NUMBER, autoconnect_address);
             scanner->destroy();
         } else if (serverList.size() > 0) {
@@ -95,8 +93,6 @@ void AutoConnectScreen::update(float delta)
                         if (server.name == ship_filters["server"]) {
                             status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", server.name}}));
                             connect_to_address = server.address;
-                            if (game_client)
-                                disconnectFromServer();
                             new GameClient(VERSION_NUMBER, server.address);
                             scanner->destroy();
                             found_server = true;
@@ -111,8 +107,6 @@ void AutoConnectScreen::update(float delta)
                 // In single-server mode, just connect to the first available server
                 status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", serverList[0].name}}));
                 connect_to_address = serverList[0].address;
-                if (game_client)
-                    disconnectFromServer();
                 new GameClient(VERSION_NUMBER, serverList[0].address);
                 scanner->destroy();
             }
@@ -124,7 +118,7 @@ void AutoConnectScreen::update(float delta)
         if (!game_client)
         {
             disconnectFromServer();
-            returnToMainMenu(true);
+            returnToMainMenu();
             return;
         }
         switch(game_client->getStatus())
@@ -132,43 +126,20 @@ void AutoConnectScreen::update(float delta)
         case GameClient::ReadyToConnect:
         case GameClient::Connecting:
         case GameClient::Authenticating:
-            // With a busy server (heavy scenario Lua), the client can stay here until the server
-            // sends auth/replication; avoid assuming a timeout — show "Connecting..." until then.
             status_label->setText(tr("autoconnect", "Connecting: {address}").format({{"address", connect_to_address.toString()}}));
             break;
         case GameClient::WaitingForPassword:
             status_label->setText(tr("autoconnect", "Server requires password. Please use manual connection."));
             disconnectFromServer();
-            returnToMainMenu(true);
+            returnToMainMenu();
             break;
         case GameClient::Disconnected:
-        {
-            string autoconnect_address = PreferencesManager::get("autoconnect_address", "");
-            // If an explicit autoconnect_address is configured, keep waiting and retrying instead of
-            // returning to the main menu when the server is not up yet.
-            if (autoconnect_address != "")
-            {
-                disconnectFromServer();
-                // Restart scanner so the update() loop goes back into the "scanner" branch,
-                // which will attempt to connect to the configured address again.
-                if (!scanner)
-                {
-                    scanner = new ServerScanner(VERSION_NUMBER);
-                    scanner->scanLocalNetwork();
-                }
-                status_label->setText(tr("autoconnect", "Waiting for server {address}...").format({{"address", autoconnect_address}}));
-            }
-            else
-            {
-                disconnectFromServer();
-                returnToMainMenu(true);
-            }
+            disconnectFromServer();
+            returnToMainMenu();
             break;
-        }
         case GameClient::Connected:
             if (game_client->getClientId() > 0)
             {
-                my_player_info = nullptr;
                 foreach(PlayerInfo, i, player_info_list)
                     if (i->client_id == game_client->getClientId())
                         my_player_info = i;
@@ -180,30 +151,9 @@ void AutoConnectScreen::update(float delta)
                         return;
                     }
 
+                    status_label->setText(tr("autoconnect", "Scenario started. Looking for available ships..."));
                     if (!my_spaceship)
                     {
-                        // When connecting to an already-running server, GameGlobalInfo::playerShipId may replicate
-                        // before the actual PlayerSpaceship objects (and their templates). A fixed delay can get
-                        // stuck if delta is 0 or replication is slow; instead, wait until at least two ship entries
-                        // resolve to real ships with templates (filters out "IDs arrived but objects didn't yet").
-                        int ready_ship_count = 0;
-                        for (int n = 0; n < GameGlobalInfo::max_player_ships; n++)
-                        {
-                            P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
-                            if (ship && ship->ship_template && ship->ship_template->getType() != ShipTemplate::TemplateType::Drone)
-                            {
-                                ready_ship_count++;
-                                if (ready_ship_count >= 2)
-                                    break;
-                            }
-                        }
-                        if (ready_ship_count < 2)
-                        {
-                            status_label->setText(tr("autoconnect", "Scenario started. Waiting for ship list..."));
-                            return;
-                        }
-
-                        status_label->setText(tr("autoconnect", "Looking for available ships..."));
                         int preferred_index = PreferencesManager::get("autoconnect_ship_index", "1").toInt();
                         preferred_index = preferred_index - 1;
                         if (preferred_index < 0) preferred_index = 0;
@@ -301,7 +251,7 @@ void AutoConnectScreen::connectToShip(int index)
             // Don't destroy the panel - we're inside its callback. Just clear ref and destroy parent.
             control_code_numeric_panel = nullptr;
             destroy();
-            returnToMainMenu(true);
+            returnToMainMenu();
         });
     } else {
         autoConnectPasswordEntryOnOkClick(ship);
@@ -333,20 +283,20 @@ void AutoConnectScreen::autoConnectPasswordEntryOnOkClick(P<PlayerSpaceship> shi
     string autostationslist = PreferencesManager::get("autostationslist", "");
     if (autostationslist != "")
     {
-        // Same 1-based numbering as autoconnect: 1=Helms, 2=Weapons, 3=Engineering, etc. Comma-separated.
         std::vector<string> stations = autostationslist.split(",");
         for(string station : stations)
         {
-            int one_based = station.toInt();
-            if (one_based >= 1 && one_based <= int(max_crew_positions))
-                my_player_info->commandSetCrewPosition(ECrewPosition(one_based - 1), true);
+            int station_id = station.toInt();
+            if (station_id >= 0 && station_id < max_crew_positions)
+                my_player_info->commandSetCrewPosition(ECrewPosition(station_id), true);
         }
     }
 
     destroy();
-    // Mark autoconnect as done for this session so ESC in scenario goes to ship selection; disconnect goes to main menu.
-    setAutoconnectSessionDone(true);
-    // Defer UI spawn by one frame so the main screen 3D viewport gets valid layout/state (fixes black screen on first load).
+    // Mark autoconnect as done for this session so ESC/return goes to main menu, not AutoConnectScreen.
+    PreferencesManager::set("autoconnect_session_done", "1");
+    // Defer UI spawn to GameGlobalInfo::update() so it runs when my_spaceship is
+    // resolved (same or next frame). Fixes station UI not appearing when autoconnect
+    // connects before unpause or with replication delay.
     my_player_info->ui_spawn_pending = true;
-    my_player_info->ui_spawn_delay_frames = 1;
 }

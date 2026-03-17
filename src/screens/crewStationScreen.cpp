@@ -11,7 +11,6 @@
 #include "screenComponents/helpOverlay.h"
 #include "screenComponents/impulseSound.h"
 #include "screenComponents/viewportMainScreen.h"
-#include "screens/extra/probeScreen.h"
 
 #include "gui/gui2_togglebutton.h"
 #include "gui/gui2_panel.h"
@@ -152,7 +151,7 @@ void CrewStationScreen::update(float delta)
         soundManager->stopMusic();
         impulse_sound->stop();
         disconnectFromServer();
-        returnToMainMenu(true);
+        returnToMainMenu();
         return;
     }
 
@@ -187,18 +186,6 @@ void CrewStationScreen::update(float delta)
         // If we're not the player ship (ie. we exploded), stop playing the
         // impulse engine sound.
         impulse_sound->stop();
-    }
-
-    // Update the visible tab if it is ProbeScreen (it is not a global Updatable to avoid
-    // pure-virtual call when escaping to station selection).
-    for (const CrewTabInfo& info : tabs)
-    {
-        if (info.element->isVisible())
-        {
-            if (ProbeScreen* probe_screen = dynamic_cast<ProbeScreen*>(info.element))
-                probe_screen->update(delta);
-            break;
-        }
     }
 }
 

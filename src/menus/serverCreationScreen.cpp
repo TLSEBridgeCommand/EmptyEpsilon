@@ -208,14 +208,13 @@ ServerCreationScreen::ServerCreationScreen()
     (new GuiButton(left_container, "CLOSE_SERVER", tr("Close server"), [this]() {
         destroy();
         disconnectFromServer();
-        returnToMainMenu(true);
+        returnToMainMenu();
     }))->setPosition(0, -50, ABottomCenter)->setSize(300, 50);
 
-    // Start server button (enabled only when a scenario is selected, not when viewing folders).
-    start_scenario_button = new GuiButton(right_container, "START_SERVER", tr("Start scenario"), [this]() {
+    // Start server button.
+    (new GuiButton(right_container, "START_SERVER", tr("Start scenario"), [this]() {
         startScenario();
-    });
-    start_scenario_button->setPosition(0, -50, ABottomCenter)->setSize(300, 50)->setEnable(false);
+    }))->setPosition(0, -50, ABottomCenter)->setSize(300, 50);
 
     // Fetch all scenario_*.lua files (root and in any subfolder). Engine matches pattern against full path.
     std::vector<string> scenario_filenames = findResources("*scenario_*.lua");
@@ -257,7 +256,6 @@ void ServerCreationScreen::showFolderList()
     viewing_folders = true;
     scenario_label->setText(tr("Category Selection"));
     back_button->setVisible(false);
-    start_scenario_button->setEnable(false);
     scenario_list->setOptions({}, {});
     for (string folder : folder_names_ordered)
     {
@@ -295,7 +293,6 @@ void ServerCreationScreen::selectScenario(string filename)
 {
     // When a scenario is selected, display its description and variations.
     selected_scenario_filename = filename;
-    start_scenario_button->setEnable(true);
 
     // Open the scenario file.
     ScenarioInfo info(selected_scenario_filename);
@@ -339,8 +336,6 @@ void ServerCreationScreen::selectScenario(string filename)
 
 void ServerCreationScreen::startScenario()
 {
-    if (selected_scenario_filename.empty())
-        return;
     // Set these settings to use as future defaults.
     PreferencesManager::set("server_config_warp_jump_drive_setting", string(int(gameGlobalInfo->player_warp_jump_drive_setting)));
     PreferencesManager::set("server_config_scanning_complexity", string(int(gameGlobalInfo->scanning_complexity)));

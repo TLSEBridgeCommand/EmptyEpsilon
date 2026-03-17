@@ -275,7 +275,7 @@ ShipSelectionScreen::ShipSelectionScreen()
         (new GuiButton(left_container, "DISCONNECT", tr("button", "Disconnect"), [this]() {
             destroy();
             disconnectFromServer();
-            returnToMainMenu(true);
+            returnToMainMenu();
         }))->setPosition(0, -50, ABottomCenter)->setSize(300, 50);
     }
 
@@ -460,7 +460,7 @@ void ShipSelectionScreen::update(float delta)
     {
         destroy();
         disconnectFromServer();
-        returnToMainMenu(true);
+        returnToMainMenu();
         return;
     }
 

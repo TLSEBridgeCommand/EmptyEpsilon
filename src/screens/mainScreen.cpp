@@ -38,8 +38,7 @@ ScreenMainScreen::ScreenMainScreen()
     long_range_radar->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     long_range_radar->setRangeIndicatorStepSize(5000.0f)->longRange()->enableCallsigns()->hide();
     long_range_radar->setFogOfWarStyle(GuiRadarView::NebulaFogOfWar);
-    float long_range = my_spaceship ? my_spaceship->getLongRangeRadarRange() : 50000.0f;
-    far_range_radar = new GuiRadarView(this, "GLOBAL", long_range, nullptr, my_spaceship);
+    far_range_radar = new GuiRadarView(this, "GLOBAL", my_spaceship->getLongRangeRadarRange(), nullptr, my_spaceship);
     far_range_radar->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     far_range_radar->setAutoCentering(true);
     far_range_radar->longRange()->enableWaypoints()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
@@ -89,7 +88,7 @@ void ScreenMainScreen::update(float delta)
         impulse_sound->stop();
         destroy();
         disconnectFromServer();
-        returnToMainMenu(true);
+        returnToMainMenu();
         return;
     }
 

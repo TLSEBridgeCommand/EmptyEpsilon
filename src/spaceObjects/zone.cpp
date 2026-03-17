@@ -5,9 +5,6 @@
 #include "explosionEffect.h"
 #include "pathPlanner.h"
 
-#include <algorithm>
-#include <cmath>
-
 #include "math/triangulate.h"
 #include "math/centerOfMass.h"
 
@@ -17,7 +14,6 @@
 REGISTER_SCRIPT_SUBCLASS(Zone, SpaceObject)
 {
     /// Set corners of n-gon to x_1, y_1, x_2, y_2, ..., x_n, y_n.
-    /// Points can be in any order; they are sorted by angle to form the polygon.
     /// Recall that x goes right and y goes down.
     /// Example: zone = Zone():setPoints(2000, 0, 0, 3000, -2000, 0)
     REGISTER_SCRIPT_CLASS_FUNCTION(Zone, setPoints);
@@ -94,24 +90,6 @@ void Zone::setColor(int r, int g, int b)
 
 void Zone::setPoints(std::vector<sf::Vector2f> points)
 {
-    if (points.size() < 3)
-    {
-        triangles.clear();
-        outline.clear();
-        return;
-    }
-
-    // Sort points by angle around center so the polygon has consistent winding
-    // (Lua scripts can pass points in any order).
-    sf::Vector2f center(0.f, 0.f);
-    for (const auto& p : points)
-        center += p;
-    center.x /= points.size();
-    center.y /= points.size();
-    std::sort(points.begin(), points.end(), [&center](const sf::Vector2f& a, const sf::Vector2f& b) {
-        return atan2(a.y - center.y, a.x - center.x) < atan2(b.y - center.y, b.x - center.x);
-    });
-
     triangles.clear();
 
     sf::Vector2f position = centerOfMass(points);

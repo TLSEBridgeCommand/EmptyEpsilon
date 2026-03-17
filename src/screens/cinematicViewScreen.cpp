@@ -54,7 +54,7 @@ void CinematicViewScreen::update(float delta)
     {
         destroy();
         disconnectFromServer();
-        returnToMainMenu(true);
+        returnToMainMenu();
         return;
     }
 

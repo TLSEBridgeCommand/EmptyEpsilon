@@ -54,7 +54,7 @@ void TopDownScreen::update(float delta)
     {
         destroy();
         disconnectFromServer();
-        returnToMainMenu(true);
+        returnToMainMenu();
         return;
     }
 

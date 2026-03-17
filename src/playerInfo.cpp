@@ -157,11 +157,6 @@ void PlayerInfo::onReceiveClientCommand(int32_t client_id, sf::Packet& packet)
 
 void PlayerInfo::spawnUI()
 {
-    // Defensive: only spawn when my_spaceship is valid (e.g. after connect to already-running server
-    // replication may lag; GameGlobalInfo::update() already checks this before calling spawnUI()).
-    if (!my_spaceship)
-        return;
-
     if (my_player_info->isOnlyMainScreen())
     {
         new ScreenMainScreen();

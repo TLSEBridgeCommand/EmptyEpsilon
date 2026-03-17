@@ -16,7 +16,6 @@ class GuiCombatManeuver;
 class GuiImpulseControls;
 class GuiDockingButton;
 class GuiShieldsEnableButton;
-class GuiDockingMenu;
 class GuiCustomShipFunctions;
 class AimLockButton;
 
@@ -43,7 +42,6 @@ private:
     GuiImpulseControls* impulse_controls;
     GuiDockingButton* docking_button;
     GuiShieldsEnableButton* shields_enable_button;
-    GuiDockingMenu* docking_menu;
     GuiCustomShipFunctions* custom_ship_functions;
     AimLockButton* lock_aim;
 public:
@@ -54,7 +52,6 @@ public:
     virtual bool onJoystickAxis(const AxisAction& axisAction) override;
     void setTargetSpaceship(P<PlayerSpaceship> targetSpaceship);
 
-    void showDockingMenu();
 };
 
 #endif//SINGLE_PILOT_VIEW_H
