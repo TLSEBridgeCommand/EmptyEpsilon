@@ -48,6 +48,12 @@ GameMasterScreen::GameMasterScreen()
     });
     pause_button->setValue(engine->getGameSpeed() == 0.0f)->setPosition(20, 20, ATopLeft)->setSize(150, 50);
     speed_selector = new GuiSelector(this, "SPEED_SELECTOR", [this](int index, string value) {
+        try {
+            float speed = std::stof(value);
+            gameMasterActions->commandSetGameSpeed(speed);
+        } catch (const std::exception&) {
+            gameMasterActions->commandSetGameSpeed(1.0f);
+        }
     });
     speed_selector->addEntry(tr("", "x0"), "0");
     speed_selector->addEntry(tr("", "x1"), "1");
