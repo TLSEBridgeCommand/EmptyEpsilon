@@ -341,6 +341,7 @@ void ServerCreationScreen::selectScenario(string filename)
 void ServerCreationScreen::startScenario()
 {
     if (selected_scenario_filename.empty())
+        return;
     // Set these settings to use as future defaults.
     PreferencesManager::set("server_config_warp_jump_drive_setting", string(int(gameGlobalInfo->player_warp_jump_drive_setting)));
     PreferencesManager::set("server_config_scanning_complexity", string(int(gameGlobalInfo->scanning_complexity)));
