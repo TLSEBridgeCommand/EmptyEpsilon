@@ -159,13 +159,18 @@ void GameGlobalInfo::update(float delta)
         {
             if (game_server)
                 my_spaceship = game_server->getObjectById(my_player_info->ship_id);
-            else
+            else if (game_client)
                 my_spaceship = game_client->getObjectById(my_player_info->ship_id);
         }
 
         // If UI spawn is pending and my_spaceship is now valid, spawn UI (e.g. after autoconnect).
-        // Clear the flag so we only spawn once.
+        // Only spawn when both are valid to avoid null dereference when connecting to an
+        // already-running server (replication delay or heavy server Lua can delay ship data).
         if (my_player_info->ui_spawn_pending && my_spaceship) {
+            if (my_player_info->ui_spawn_delay_frames > 0) {
+                my_player_info->ui_spawn_delay_frames--;
+                return;
+            }
             my_player_info->ui_spawn_pending = false;
             my_player_info->spawnUI();
         }
@@ -244,7 +249,9 @@ void GameGlobalInfo::startScenario(string filename)
     script->run(filename);
     engine->registerObject("scenario", script);
 
-    if (PreferencesManager::get("game_logs", "1").toInt())
+    // GameStateLogger writes detailed per-tick state logs to logs/game_log_*.txt.
+    // Default is OFF; enable by setting game_logs=1 in options.ini when needed.
+    if (PreferencesManager::get("game_logs", "0").toInt())
     {
         state_logger = new GameStateLogger();
         state_logger->start();
@@ -324,16 +331,16 @@ string getSectorName(sf::Vector2f position, int scale_magnitude, bool show_all)
         int sector_x = floorf(position.x / GameGlobalInfo::sector_size);
         int sector_y = floorf(position.y / GameGlobalInfo::sector_size);
         
-        // Draw area only if first sector of the area
-        if (!show_all && scale_magnitude == 2 && (sector_x % (8*8) != 0 || sector_y % (8*8) != 0))
+        // Draw area only if first sector of the area (128 sectors per side)
+        if (!show_all && scale_magnitude == 2 && (sector_x % 128 != 0 || sector_y % 128 != 0))
             return "";
 
         // Draw region only if first area of the region
         if (!show_all && scale_magnitude == 4 && (sector_x % (8*8*8*8) != 0 || sector_y % (8*8*8*8) != 0))
             return "";
         
-        // Area (scale_magnitude == 2)
-        int area_factor = std::pow(8,2) * GameGlobalInfo::sector_size;
+        // Area (scale_magnitude == 2): 128 sectors per side (A1-A128, B1-B128, ...)
+        int area_factor = 128 * GameGlobalInfo::sector_size;
         int area_x = floorf((position.x) / area_factor);
         int area_y = floorf((position.y) / area_factor);
 
@@ -346,9 +353,9 @@ string getSectorName(sf::Vector2f position, int scale_magnitude, bool show_all)
         sector_x = sector_x - floorf((area_x * area_factor)/ GameGlobalInfo::sector_size);
         sector_y = sector_y - floorf((area_y * area_factor)/ GameGlobalInfo::sector_size);
         
-        // Refactor area based on region
-        area_x = area_x - floorf((region_x * region_factor)/ (GameGlobalInfo::sector_size * 64));
-        area_y = area_y - floorf((region_y * region_factor)/ (GameGlobalInfo::sector_size * 64));
+        // Refactor area based on region (128 sectors per area side)
+        area_x = area_x - floorf((region_x * region_factor)/ (GameGlobalInfo::sector_size * 128));
+        area_y = area_y - floorf((region_y * region_factor)/ (GameGlobalInfo::sector_size * 128));
         
         x = string(sector_x + 1);
         if (sector_y >= 26)

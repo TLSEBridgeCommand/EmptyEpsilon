@@ -27,6 +27,7 @@ class ServerCreationScreen : public GuiCanvas
     GuiLabel* scenario_label;
     GuiListbox* scenario_list;
     GuiButton* back_button;
+    GuiButton* start_scenario_button;
     bool viewing_folders;
     std::vector<string> folder_names_ordered;
     std::map<string, std::vector<string> > scenarios_by_folder;

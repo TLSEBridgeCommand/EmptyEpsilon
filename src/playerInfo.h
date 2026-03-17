@@ -57,6 +57,8 @@ public:
     string name;
     bool gm_access;
     bool ui_spawn_pending = false;
+    /** Frames to wait before spawning UI (e.g. 1 after autoconnect so 3D viewport has valid state). */
+    int ui_spawn_delay_frames = 0;
 
     PlayerInfo();
 

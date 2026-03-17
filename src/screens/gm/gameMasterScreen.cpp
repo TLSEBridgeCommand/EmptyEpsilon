@@ -1,3 +1,4 @@
+#include <exception>
 #include "main.h"
 #include "gameGlobalInfo.h"
 #include "GMActions.h"
@@ -47,13 +48,18 @@ GameMasterScreen::GameMasterScreen()
     });
     pause_button->setValue(engine->getGameSpeed() == 0.0f)->setPosition(20, 20, ATopLeft)->setSize(150, 50);
     speed_selector = new GuiSelector(this, "SPEED_SELECTOR", [this](int index, string value) {
-        gameMasterActions->commandSetGameSpeed(std::stof(value));
+        try {
+            float speed = std::stof(value);
+            gameMasterActions->commandSetGameSpeed(speed);
+        } catch (const std::exception&) {
+            gameMasterActions->commandSetGameSpeed(1.0f);
+        }
     });
-    speed_selector->addEntry(tr("", "x0"), "0.0f");
-    speed_selector->addEntry(tr("", "x1"), "1.0f");
-    speed_selector->addEntry(tr("", "x2"), "2.0f");
-    speed_selector->addEntry(tr("", "x3"), "3.0f");
-    speed_selector->addEntry(tr("", "x4"), "4.0f");
+    speed_selector->addEntry(tr("", "x0"), "0");
+    speed_selector->addEntry(tr("", "x1"), "1");
+    speed_selector->addEntry(tr("", "x2"), "2");
+    speed_selector->addEntry(tr("", "x3"), "3");
+    speed_selector->addEntry(tr("", "x4"), "4");
     speed_selector->setPosition(170, 20, ATopLeft)->setSize(100, 50);
     speed_selector->setSelectionIndex(1);
 

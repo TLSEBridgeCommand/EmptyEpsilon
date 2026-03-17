@@ -4,6 +4,8 @@
 #include "preferenceManager.h"
 #include "GMActions.h"
 #include "main.h"
+#include <exception>
+#include "logging.h"
 
 EpsilonServer::EpsilonServer()
 : GameServer("Server", VERSION_NUMBER)
@@ -47,18 +49,44 @@ void disconnectFromServer()
 {
     soundManager->stopMusic();
 
-    if (game_client)
-        game_client->destroy();
-    if (game_server)
-        game_server->destroy();
-    if (gameGlobalInfo)
-        gameGlobalInfo->destroy();
-    if (gameMasterActions)
-        gameMasterActions->destroy();
-    foreach(PlayerInfo, i, player_info_list)
-        i->destroy();
-    if (my_player_info)
-        my_player_info->destroy();
+    try
+    {
+        if (game_client)
+        {
+            game_client->requestDisconnect();
+            game_client->destroy();
+        }
+        if (game_server)
+            game_server->destroy();
+        if (gameGlobalInfo)
+            gameGlobalInfo->destroy();
+        if (gameMasterActions)
+            gameMasterActions->destroy();
+        foreach(PlayerInfo, i, player_info_list)
+            i->destroy();
+        if (my_player_info)
+            my_player_info->destroy();
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR) << "Exception during disconnect (e.g. in-flight data on LAN): " << e.what();
+        try
+        {
+            if (game_client)
+                game_client->destroy();
+            if (game_server)
+                game_server->destroy();
+            if (gameGlobalInfo)
+                gameGlobalInfo->destroy();
+            if (gameMasterActions)
+                gameMasterActions->destroy();
+            foreach(PlayerInfo, i, player_info_list)
+                i->destroy();
+            if (my_player_info)
+                my_player_info->destroy();
+        }
+        catch (...) {}
+    }
 }
 
 std::unordered_set<int32_t> EpsilonServer::onVoiceChat(int32_t client_id, int32_t target_identifier)

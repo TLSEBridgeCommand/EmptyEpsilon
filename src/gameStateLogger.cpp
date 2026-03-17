@@ -153,7 +153,7 @@ void GameStateLogger::stop()
 
 void GameStateLogger::update(float delta)
 {
-    if (!log_file || delta == 0.0)
+    if (!log_file || delta == 0.0 || !game_server || !gameGlobalInfo)
         return;
 
     logging_delay -= delta;
@@ -176,6 +176,8 @@ void GameStateLogger::update(float delta)
 */
 void GameStateLogger::logGameState()
 {
+    if (!game_server || !gameGlobalInfo)
+        return;
     static char log_line_buffer[1024*1024*10];
     char* ptr = log_line_buffer;
 
