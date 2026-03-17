@@ -8,7 +8,7 @@
 
 class GuiViewport3D;
 
-class ProbeScreen : public GuiOverlay, public Updatable
+class ProbeScreen : public GuiOverlay
 {
 private:
     GuiOverlay* background_crosses;
@@ -19,7 +19,7 @@ private:
 public:
     ProbeScreen(GuiContainer* owner);
 
-    virtual void update(float delta) override;
+    void update(float delta);
 
     virtual void onHotkey(const HotkeyResult& key) override;
 

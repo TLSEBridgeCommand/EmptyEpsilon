@@ -133,6 +133,8 @@ ERepairCrewDirection pathFind(sf::Vector2i start_pos, sf::Vector2i target_pos, P
 
 void RepairCrew::update(float delta)
 {
+    if (!gameGlobalInfo)
+        return;
     if (gameGlobalInfo->use_nano_repair_crew)
     {
         destroy();
