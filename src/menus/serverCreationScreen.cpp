@@ -208,7 +208,7 @@ ServerCreationScreen::ServerCreationScreen()
     (new GuiButton(left_container, "CLOSE_SERVER", tr("Close server"), [this]() {
         destroy();
         disconnectFromServer();
-        returnToMainMenu();
+        returnToMainMenu(true);
     }))->setPosition(0, -50, ABottomCenter)->setSize(300, 50);
 
     // Start server button (enabled only when a scenario is selected, not when viewing folders).

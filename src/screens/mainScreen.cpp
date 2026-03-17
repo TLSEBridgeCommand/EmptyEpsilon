@@ -89,7 +89,7 @@ void ScreenMainScreen::update(float delta)
         impulse_sound->stop();
         destroy();
         disconnectFromServer();
-        returnToMainMenu();
+        returnToMainMenu(true);
         return;
     }
 

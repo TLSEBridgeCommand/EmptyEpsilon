@@ -159,13 +159,18 @@ void GameGlobalInfo::update(float delta)
         {
             if (game_server)
                 my_spaceship = game_server->getObjectById(my_player_info->ship_id);
-            else
+            else if (game_client)
                 my_spaceship = game_client->getObjectById(my_player_info->ship_id);
         }
 
         // If UI spawn is pending and my_spaceship is now valid, spawn UI (e.g. after autoconnect).
-        // Clear the flag so we only spawn once.
+        // Only spawn when both are valid to avoid null dereference when connecting to an
+        // already-running server (replication delay or heavy server Lua can delay ship data).
         if (my_player_info->ui_spawn_pending && my_spaceship) {
+            if (my_player_info->ui_spawn_delay_frames > 0) {
+                my_player_info->ui_spawn_delay_frames--;
+                return;
+            }
             my_player_info->ui_spawn_pending = false;
             my_player_info->spawnUI();
         }

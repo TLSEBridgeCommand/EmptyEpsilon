@@ -31,7 +31,7 @@ void WindowScreen::update(float delta)
     {
         destroy();
         disconnectFromServer();
-        returnToMainMenu();
+        returnToMainMenu(true);
         return;
     }
 

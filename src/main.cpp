@@ -323,7 +323,7 @@ int main(int argc, char** argv)
 //     new DiscordRichPresence();
 // #endif
 
-    PreferencesManager::set("autoconnect_session_done", "0");
+    setAutoconnectSessionDone(false);
     returnToMainMenu();
     engine->runMainLoop();
 
@@ -392,8 +392,32 @@ int main(int argc, char** argv)
     return 0;
 }
 
-void returnToMainMenu()
+static bool s_autoconnect_session_done = false;
+
+void setAutoconnectSessionDone(bool done)
 {
+    s_autoconnect_session_done = done;
+}
+
+bool isAutoconnectSessionDone()
+{
+    return s_autoconnect_session_done;
+}
+
+void returnToMainMenu(bool from_disconnect)
+{
+    // If autoconnect already ran this session, "returnToMainMenu()" is used in two contexts:
+    // - While still connected (ESC in scenario): go to ShipSelectionScreen.
+    // - After disconnecting back to menu: show MainMenu (Start Client/Options/Tutorials).
+    // Some UI paths call returnToMainMenu() without from_disconnect=true even though the
+    // client is already disconnected; prevent creating ShipSelectionScreen in that case,
+    // as it assumes a valid connection and my_player_info.
+    if (!from_disconnect && isAutoconnectSessionDone())
+    {
+        if (!game_client || game_client->getStatus() == GameClient::Disconnected)
+            from_disconnect = true;
+    }
+
     if (PreferencesManager::get("headless") != "")
     {
         new EpsilonServer();
@@ -406,17 +430,18 @@ void returnToMainMenu()
         if (PreferencesManager::get("startpaused") != "1")
             engine->setGameSpeed(1.0);
     }
-    else if (PreferencesManager::get("autoconnect").toInt() && PreferencesManager::get("autoconnect_session_done", "0") != "1")
+    else if (!from_disconnect && PreferencesManager::get("autoconnect").toInt() && !isAutoconnectSessionDone())
     {
-        // Autoconnect only on first connect this session; after ESC/return use ship selection.
+        // Autoconnect only on first connect this session.
         int crew_position = PreferencesManager::get("autoconnect").toInt() - 1;
         if (crew_position < 0) crew_position = 0;
         if (crew_position > max_crew_positions) crew_position = max_crew_positions;
         new AutoConnectScreen(ECrewPosition(crew_position), PreferencesManager::get("automainscreen").toInt(), PreferencesManager::get("autocontrolmainscreen").toInt(), PreferencesManager::get("autoconnectship", "solo"));
     }
-    else if (PreferencesManager::get("autoconnect").toInt() && PreferencesManager::get("autoconnect_session_done", "0") == "1")
+    else if (!from_disconnect && PreferencesManager::get("autoconnect").toInt() && isAutoconnectSessionDone()
+        && game_client && game_client->getStatus() != GameClient::Disconnected)
     {
-        PreferencesManager::set("autoconnect_session_done", "0");
+        // ESC in scenario: go to ship selection so user can pick another ship.
         new ShipSelectionScreen();
     }
     else if (PreferencesManager::get("touchcalib").toInt())

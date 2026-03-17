@@ -152,7 +152,7 @@ void CrewStationScreen::update(float delta)
         soundManager->stopMusic();
         impulse_sound->stop();
         disconnectFromServer();
-        returnToMainMenu();
+        returnToMainMenu(true);
         return;
     }
 
