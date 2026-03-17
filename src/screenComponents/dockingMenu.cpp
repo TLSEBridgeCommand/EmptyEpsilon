@@ -63,6 +63,12 @@ GuiDockingMenu::GuiDockingMenu(GuiContainer* owner, P<PlayerSpaceship> targetSpa
     populateDockingTargets();
 }
 
+void GuiDockingMenu::setTargetSpaceship(P<PlayerSpaceship> targetSpaceship)
+{
+    target_spaceship = targetSpaceship;
+    populateDockingTargets();
+}
+
 void GuiDockingMenu::onUpdate()
 {
     // Only update if the menu is visible
