@@ -324,16 +324,16 @@ string getSectorName(sf::Vector2f position, int scale_magnitude, bool show_all)
         int sector_x = floorf(position.x / GameGlobalInfo::sector_size);
         int sector_y = floorf(position.y / GameGlobalInfo::sector_size);
         
-        // Draw area only if first sector of the area
-        if (!show_all && scale_magnitude == 2 && (sector_x % (8*8) != 0 || sector_y % (8*8) != 0))
+        // Draw area only if first sector of the area (128 sectors per side)
+        if (!show_all && scale_magnitude == 2 && (sector_x % 128 != 0 || sector_y % 128 != 0))
             return "";
 
         // Draw region only if first area of the region
         if (!show_all && scale_magnitude == 4 && (sector_x % (8*8*8*8) != 0 || sector_y % (8*8*8*8) != 0))
             return "";
         
-        // Area (scale_magnitude == 2)
-        int area_factor = std::pow(8,2) * GameGlobalInfo::sector_size;
+        // Area (scale_magnitude == 2): 128 sectors per side (A1-A128, B1-B128, ...)
+        int area_factor = 128 * GameGlobalInfo::sector_size;
         int area_x = floorf((position.x) / area_factor);
         int area_y = floorf((position.y) / area_factor);
 
@@ -346,9 +346,9 @@ string getSectorName(sf::Vector2f position, int scale_magnitude, bool show_all)
         sector_x = sector_x - floorf((area_x * area_factor)/ GameGlobalInfo::sector_size);
         sector_y = sector_y - floorf((area_y * area_factor)/ GameGlobalInfo::sector_size);
         
-        // Refactor area based on region
-        area_x = area_x - floorf((region_x * region_factor)/ (GameGlobalInfo::sector_size * 64));
-        area_y = area_y - floorf((region_y * region_factor)/ (GameGlobalInfo::sector_size * 64));
+        // Refactor area based on region (128 sectors per area side)
+        area_x = area_x - floorf((region_x * region_factor)/ (GameGlobalInfo::sector_size * 128));
+        area_y = area_y - floorf((region_y * region_factor)/ (GameGlobalInfo::sector_size * 128));
         
         x = string(sector_x + 1);
         if (sector_y >= 26)
