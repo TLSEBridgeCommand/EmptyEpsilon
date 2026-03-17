@@ -244,7 +244,9 @@ void GameGlobalInfo::startScenario(string filename)
     script->run(filename);
     engine->registerObject("scenario", script);
 
-    if (PreferencesManager::get("game_logs", "1").toInt())
+    // GameStateLogger writes detailed per-tick state logs to logs/game_log_*.txt.
+    // Default is OFF; enable by setting game_logs=1 in options.ini when needed.
+    if (PreferencesManager::get("game_logs", "0").toInt())
     {
         state_logger = new GameStateLogger();
         state_logger->start();
