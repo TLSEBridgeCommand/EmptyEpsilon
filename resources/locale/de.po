@@ -841,8 +841,8 @@ msgctxt "selfdestruct"
 msgid "Enter [{letter}]"
 msgstr "[{letter}] eingeben"
 
-#: src/screenComponents/dockingButton.cpp:42
-msgid "Request Dock"
+#: src/screenComponents/dockingButton.cpp:68
+msgid "Initiate Docking"
 msgstr "Andocken"
 
 #: src/screenComponents/dockingButton.cpp:51

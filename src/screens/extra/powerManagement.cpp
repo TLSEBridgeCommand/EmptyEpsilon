@@ -116,13 +116,13 @@ void PowerManagementScreen::onDraw(sf::RenderTarget& window)
             float coolant_req_percent = coolant_req*100 / my_spaceship->max_coolant_per_system;
 
             systems[n].coolant_label->setText(
-                    tr("Coolant: {coolant_level}% / {coolant_req}%").format(
+                    tr("Coolant: {coolant_level}% - {coolant_req}%").format(
                         {{"coolant_level", string(coolant_percent, 0)},
                          {"coolant_req", string(coolant_req_percent, 0)}}
                      )
             );
             systems[n].power_label->setText(
-                tr("Power: {power_level}% / {power_req}%").format(
+                tr("Power: {power_level}% - {power_req}%").format(
                     {{"power_level", string(power*100, 0)},
                      {"power_req", string(power_req*100, 0)}}
                 )

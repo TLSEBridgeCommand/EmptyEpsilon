@@ -280,14 +280,17 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     layout->setPosition(-20, -70, ABottomRight)->setSize(300, GuiElement::GuiSizeMax);
 
     // Center on ship
-    center_button = new GuiToggleButton(layout, "CENTER_ON_SHIP", tr("Free Range Mode"), [this](bool value) {
+    center_button = new GuiToggleButton(layout, "CENTER_ON_SHIP", tr("Centre on Vessel: Off"), [this](bool value) {
         if(!my_spaceship) return;
         radar->setAutoCentering(value);
-        center_button->setText(value ? tr("Centered on Vessel") : tr("Free Range Mode"));
+        // Toggle label shows what will happen when the player presses the button.
+        // - If we're currently in free range mode (value=false), the action is to enable centering.
+        // - If we're currently centered (value=true), the action is to disable centering.
+        center_button->setText(value ? tr("Centre on Vessel: On") : tr("Centre on Vessel: Off"));
     });
     center_button->setSize(GuiElement::GuiSizeMax, 50);
     center_button->setValue(false);
-    center_button->setText(tr("Free Range Mode"));
+    center_button->setText(tr("Centre on Vessel: Off"));
 
     // Alert level buttons.
     if (allow_alert) {

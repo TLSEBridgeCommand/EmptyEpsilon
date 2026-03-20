@@ -159,7 +159,7 @@ addToSequence(helmsTutorial, function() prev_object = CpuShip():setTemplate("Kin
 addToSequence(helmsTutorial, _([[Excellent.
 
 Next up: docking. You can dock with stations as well as other ships. In most cases, docking replenishes energy, repairs your hull, and allows the relay officer to request resupply.
-To dock, maneuver within 1u of a station and press the "Request Dock" button, from which point docking is fully automated.
+To dock, maneuver within 1u of a station and press the "Initiate Docking" button, from which point docking is fully automated.
 Maneuver to UCS Warspite and request permission to dock.]]), function() return player:isDocked(prev_object) end)
 addToSequence(helmsTutorial, _([[Now that you are docked, your movement is locked. As helms officer, there is nothing else you can do but undock, so do that now.]]), function() return not player:isDocked(prev_object) end)
 addToSequence(helmsTutorial, function() prev_object:destroy() end)
