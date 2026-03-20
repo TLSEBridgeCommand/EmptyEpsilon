@@ -10,6 +10,10 @@
 EpsilonServer::EpsilonServer()
 : GameServer("Server", VERSION_NUMBER)
 {
+    string default_name = PreferencesManager::get("server_name", "").strip();
+    if (default_name.length() > 0)
+        setServerName(default_name);
+
     if (game_server)
     {
         new GameGlobalInfo();

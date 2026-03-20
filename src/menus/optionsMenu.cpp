@@ -13,6 +13,7 @@
 #include "gui/gui2_slider.h"
 #include "gui/gui2_listbox.h"
 #include "gui/gui2_keyvaluedisplay.h"
+#include "gui/gui2_textentry.h"
 
 OptionsMenu::OptionsMenu()
 {
@@ -157,6 +158,16 @@ OptionsMenu::OptionsMenu()
         PreferencesManager::set("science_radar_lock", value ? "1" : "");
         PreferencesManager::set("operations_radar_lock", value ? "1" : "");
     }))->setValue(PreferencesManager::get("science_radar_lock", "0") == "1")->setSize(GuiElement::GuiSizeMax, 50);
+
+    // Default name shown on the LAN when this machine hosts a game (empty = "Server").
+    {
+        GuiElement* row = new GuiAutoLayout(interface_page, "", GuiAutoLayout::LayoutHorizontalLeftToRight);
+        row->setSize(GuiElement::GuiSizeMax, 50);
+        (new GuiLabel(row, "DEFAULT_SERVER_NAME_LABEL", tr("options", "Default host server name"), 30))->setAlignment(ACenterRight)->setSize(280, GuiElement::GuiSizeMax);
+        (new GuiTextEntry(row, "DEFAULT_SERVER_NAME", PreferencesManager::get("server_name", "")))->callback([](string text) {
+            PreferencesManager::set("server_name", text);
+        })->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
 
     // Right column, auto layout. Draw first element 50px from top.
     // Music preview jukebox.
