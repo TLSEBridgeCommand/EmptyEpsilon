@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cmath>
 #include <i18n.h>
 #include "main.h"
 #include "autoConnectScreen.h"
@@ -12,10 +14,11 @@
 #include "gui/gui2_panel.h"
 #include "gui/gui2_textentry.h"
 #include "gui/gui2_togglebutton.h"
+#include "gui/gui2_button.h"
 #include "../screenComponents/numericEntryPanel.h"
 
 AutoConnectScreen::AutoConnectScreen(ECrewPosition crew_position, int auto_mainscreen, bool control_main_screen, string ship_filter)
-: crew_position(crew_position), auto_mainscreen(auto_mainscreen) , control_main_screen(control_main_screen), update_timer(0.0f), ship_selection_delay(1.0f)
+: crew_position(crew_position), auto_mainscreen(auto_mainscreen), control_main_screen(control_main_screen), cancel_button(nullptr), cancel_button_y_set(false), update_timer(0.0f), ship_selection_delay(1.0f)
 {
     if (!game_client)
     {
@@ -27,6 +30,25 @@ AutoConnectScreen::AutoConnectScreen(ECrewPosition crew_position, int auto_mains
 
     status_label = new GuiLabel(this, "STATUS", tr("autoconnect", "Searching for server..."), 50);
     status_label->setPosition(0, 300, ATopCenter)->setSize(0, 50);
+
+    // Cancel autoconnect and take the player to ShipSelectionScreen (like ESC after autoconnect succeeds).
+    // Vertical position: ~2/3 down the viewport (applied in update() once virtual size is known).
+    cancel_button = new GuiButton(this, "AUTOCONNECT_CANCEL_BUTTON", tr("button", "Cancel"), [this]() {
+        if (!game_client || game_client->getStatus() == GameClient::Disconnected || !my_player_info)
+        {
+            disconnectFromServer();
+            destroy();
+            // Same as successful autoconnect exit: do not show AutoConnect again until restart.
+            setAutoconnectSessionDone(true);
+            returnToMainMenu(true);
+            return;
+        }
+
+        setAutoconnectSessionDone(true);
+        destroy();
+        returnToMainMenu(false);
+    });
+    cancel_button->setPosition(0, 350, ATopCenter)->setSize(220, 50);
 
     string position_name = tr("autoconnect", "Main screen");
     if (crew_position < max_crew_positions)
@@ -49,7 +71,12 @@ AutoConnectScreen::AutoConnectScreen(ECrewPosition crew_position, int auto_mains
         if (key_value.size() == 1)
             ship_filters[key] = "1";
         else if (key_value.size() == 2)
-            ship_filters[key] = key_value[1].strip();
+        {
+            string val = key_value[1].strip();
+            ship_filters[key] = val;
+            if (key == "server")
+                autoconnect_server_names.push_back(val);
+        }
         filter_label->setText(filter_label->getText() + key + " : " + ship_filters[key] + " ");
     }
 
@@ -72,11 +99,22 @@ AutoConnectScreen::~AutoConnectScreen()
 
 void AutoConnectScreen::update(float delta)
 {
+    if (!cancel_button_y_set && cancel_button && engine)
+    {
+        P<WindowManager> wm = engine->getObject("windowManager");
+        float h = wm ? static_cast<float>(wm->getVirtualSize().y) : 1080.f;
+        cancel_button->setPosition(0, h * 2.f / 3.f, ATopCenter);
+        cancel_button_y_set = true;
+    }
+
     if (scanner)
     {
         std::vector<ServerScanner::ServerInfo> serverList = scanner->getServerList();
         string autoconnect_address = PreferencesManager::get("autoconnect_address", "");
         bool multi_server_mode = PreferencesManager::get("multi_server_mode", "0").toInt() > 0;
+        float try_server_seconds = PreferencesManager::get("autoconnect_server_try_seconds", "10").toFloat();
+        if (try_server_seconds < 1.f)
+            try_server_seconds = 10.f;
 
         if (autoconnect_address != "") {
             status_label->setText(tr("autoconnect", "Using autoconnect server {address}").format({{"address", autoconnect_address}}));
@@ -85,39 +123,87 @@ void AutoConnectScreen::update(float delta)
                 disconnectFromServer();
             new GameClient(VERSION_NUMBER, autoconnect_address);
             scanner->destroy();
-        } else if (serverList.size() > 0) {
-            // In multi-server mode, we need to find the correct server based on ship filters
-            if (multi_server_mode) {
-                bool found_server = false;
-                for (const auto& server : serverList) {
-                    // Check if this server matches our ship filters
-                    if (ship_filters.find("server") != ship_filters.end()) {
-                        if (server.name == ship_filters["server"]) {
-                            status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", server.name}}));
-                            connect_to_address = server.address;
-                            if (game_client)
-                                disconnectFromServer();
-                            new GameClient(VERSION_NUMBER, server.address);
-                            scanner->destroy();
-                            found_server = true;
-                            break;
+        } else {
+            const bool multi_name_fallback = multi_server_mode && autoconnect_server_names.size() > 1;
+            if (multi_name_fallback)
+            {
+                multi_server_try_elapsed += delta;
+                if (multi_server_try_elapsed >= try_server_seconds)
+                {
+                    multi_server_try_elapsed = 0.f;
+                    multi_server_name_index = (multi_server_name_index + 1) % autoconnect_server_names.size();
+                }
+            }
+
+            if (serverList.size() > 0) {
+                if (multi_server_mode) {
+                    string target;
+                    bool have_target = false;
+                    if (!autoconnect_server_names.empty())
+                    {
+                        target = autoconnect_server_names[multi_server_name_index];
+                        have_target = true;
+                    }
+                    else if (ship_filters.find("server") != ship_filters.end())
+                    {
+                        target = ship_filters["server"];
+                        have_target = true;
+                    }
+
+                    if (have_target)
+                    {
+                        bool found_server = false;
+                        for (const auto& server : serverList)
+                        {
+                            if (server.name == target)
+                            {
+                                status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", server.name}}));
+                                connect_to_address = server.address;
+                                if (game_client)
+                                    disconnectFromServer();
+                                new GameClient(VERSION_NUMBER, server.address);
+                                scanner->destroy();
+                                found_server = true;
+                                break;
+                            }
+                        }
+                        if (!found_server)
+                        {
+                            if (multi_name_fallback)
+                            {
+                                int secs_left = std::max(0, int(std::ceil(try_server_seconds - multi_server_try_elapsed)));
+                                status_label->setText(tr("autoconnect", "Looking for server \"{name}\". Next option in {seconds} s.").format({{"name", target}, {"seconds", string(secs_left)}}));
+                            }
+                            else
+                                status_label->setText(tr("autoconnect", "Searching for matching server..."));
                         }
                     }
-                }
-                if (!found_server) {
-                    status_label->setText(tr("autoconnect", "Searching for matching server..."));
+                    else
+                        status_label->setText(tr("autoconnect", "Searching for matching server..."));
+                } else {
+                    // In single-server mode, just connect to the first available server
+                    status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", serverList[0].name}}));
+                    connect_to_address = serverList[0].address;
+                    if (game_client)
+                        disconnectFromServer();
+                    new GameClient(VERSION_NUMBER, serverList[0].address);
+                    scanner->destroy();
                 }
             } else {
-                // In single-server mode, just connect to the first available server
-                status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", serverList[0].name}}));
-                connect_to_address = serverList[0].address;
-                if (game_client)
-                    disconnectFromServer();
-                new GameClient(VERSION_NUMBER, serverList[0].address);
-                scanner->destroy();
+                if (multi_server_mode && !autoconnect_server_names.empty())
+                {
+                    string target = autoconnect_server_names[multi_server_name_index];
+                    if (multi_name_fallback)
+                    {
+                        int secs_left = std::max(0, int(std::ceil(try_server_seconds - multi_server_try_elapsed)));
+                        status_label->setText(tr("autoconnect", "No servers on LAN. Looking for \"{name}\" — next option in {seconds} s.").format({{"name", target}, {"seconds", string(secs_left)}}));
+                    }
+                    else
+                        status_label->setText(tr("autoconnect", "Searching for server..."));
+                }
+                else
+                    status_label->setText(tr("autoconnect", "Searching for server..."));
             }
-        } else {
-            status_label->setText(tr("autoconnect", "Searching for server..."));
         }
     }else{
         // Connected: check scenario/ship and optionally spawn UI, then this screen is destroyed
@@ -183,21 +269,20 @@ void AutoConnectScreen::update(float delta)
                     if (!my_spaceship)
                     {
                         // When connecting to an already-running server, GameGlobalInfo::playerShipId may replicate
-                        // before the actual PlayerSpaceship objects (and their templates). A fixed delay can get
-                        // stuck if delta is 0 or replication is slow; instead, wait until at least two ship entries
-                        // resolve to real ships with templates (filters out "IDs arrived but objects didn't yet").
-                        int ready_ship_count = 0;
+                        // before the actual PlayerSpaceship objects (and their templates). Wait until at least one
+                        // real (non-drone) ship resolves with a template before attempting to pick a ship.
+                        // Requiring 2 ships can deadlock on servers with a single playable ship.
+                        bool any_ready_ship = false;
                         for (int n = 0; n < GameGlobalInfo::max_player_ships; n++)
                         {
                             P<PlayerSpaceship> ship = gameGlobalInfo->getPlayerShip(n);
                             if (ship && ship->ship_template && ship->ship_template->getType() != ShipTemplate::TemplateType::Drone)
                             {
-                                ready_ship_count++;
-                                if (ready_ship_count >= 2)
-                                    break;
+                                any_ready_ship = true;
+                                break;
                             }
                         }
-                        if (ready_ship_count < 2)
+                        if (!any_ready_ship)
                         {
                             status_label->setText(tr("autoconnect", "Scenario started. Waiting for ship list..."));
                             return;
@@ -209,9 +294,11 @@ void AutoConnectScreen::update(float delta)
                         if (preferred_index < 0) preferred_index = 0;
                         if (preferred_index >= GameGlobalInfo::max_player_ships) preferred_index = GameGlobalInfo::max_player_ships - 1;
 
+                        bool connected_to_ship = false;
                         if (isValidShip(preferred_index))
                         {
                             connectToShip(preferred_index);
+                            connected_to_ship = true;
                         }
                         else
                         {
@@ -220,9 +307,21 @@ void AutoConnectScreen::update(float delta)
                                 if (n != preferred_index && isValidShip(n))
                                 {
                                     connectToShip(n);
+                                    connected_to_ship = true;
                                     break;
                                 }
                             }
+                        }
+
+                        // If we found ships but none were valid (already occupied, drone-only, etc.),
+                        // don't get stuck on this screen. Drop the user into ship selection.
+                        if (!connected_to_ship)
+                        {
+                            status_label->setText(tr("autoconnect", "No available ships. Opening ship selection..."));
+                            setAutoconnectSessionDone(true);
+                            destroy();
+                            returnToMainMenu(false);
+                            return;
                         }
                     } else {
                         if (my_spaceship->getMultiplayerId() == my_player_info->ship_id && (auto_mainscreen == 1 || crew_position == max_crew_positions || my_player_info->crew_position[crew_position]))
@@ -258,17 +357,11 @@ bool AutoConnectScreen::isValidShip(int index)
     if (!ship || !ship->ship_template || ship->ship_template->getType() == ShipTemplate::TemplateType::Drone)
         return false;
 
-    // Check if this ship is already crewed by this player
+    // Already on this ship (replication edge case)
     if (my_player_info->ship_id == ship->getMultiplayerId())
         return false;
 
-    // Check if this ship is already crewed by another player
-    foreach(PlayerInfo, i, player_info_list)
-    {
-        if (i->ship_id == ship->getMultiplayerId())
-            return false;
-    }
-
+    // Stations are non-exclusive for autoconnect (multiple clients may use the same role, e.g. LRR).
     return true;
 }
 
@@ -301,6 +394,7 @@ void AutoConnectScreen::connectToShip(int index)
             // Don't destroy the panel - we're inside its callback. Just clear ref and destroy parent.
             control_code_numeric_panel = nullptr;
             destroy();
+            setAutoconnectSessionDone(true);
             returnToMainMenu(true);
         });
     } else {
@@ -326,6 +420,10 @@ void AutoConnectScreen::autoConnectPasswordEntryOnOkClick(P<PlayerSpaceship> shi
 
     for(int n = 0; n < max_crew_positions; n++)
         my_player_info->commandSetCrewPosition(ECrewPosition(n), false);
+
+    // Match ship-selection toggles so spawnUI() opens MainScreen vs crew tabs correctly.
+    my_player_info->commandSetMainScreen(auto_mainscreen == 1);
+    my_player_info->commandSetMainScreenControl(control_main_screen);
 
     if (auto_mainscreen != 1 && crew_position != max_crew_positions)
         my_player_info->commandSetCrewPosition(crew_position, true);

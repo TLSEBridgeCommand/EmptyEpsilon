@@ -1,6 +1,8 @@
 #ifndef AUTO_CONNECT_SCREEN_H
 #define AUTO_CONNECT_SCREEN_H
 
+#include <vector>
+
 #include "gui/gui2_canvas.h"
 #include "playerInfo.h"
 
@@ -22,11 +24,17 @@ class AutoConnectScreen : public GuiCanvas, public Updatable
     bool control_main_screen;
     bool waiting_for_password;
     std::map<string, string> ship_filters;
+    /** Ordered names from repeated server= in autoconnectship (multi_server_mode). */
+    std::vector<string> autoconnect_server_names;
+    size_t multi_server_name_index = 0;
+    float multi_server_try_elapsed = 0.f;
     GuiOverlay* control_code_numeric_panel_overlay;
     GuiControlNumericEntryPanel* control_code_numeric_panel;
 
     GuiLabel* status_label;
     GuiLabel* filter_label;
+    GuiButton* cancel_button;
+    bool cancel_button_y_set;
     float update_timer;
     /** Delay after scenario_started before picking ship by index, so replication can settle. */
     float ship_selection_delay;
