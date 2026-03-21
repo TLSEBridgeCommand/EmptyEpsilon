@@ -9,6 +9,25 @@
 #include "missileTubeControls.h"
 #include "targetsContainer.h"
 
+/// Pixels above radar blip center for callsigns; scales with on-screen radius (stations get more clearance; small ships use at least min_y).
+static float radarCallsignOffsetY(float radius_pixels)
+{
+    const float base = 12.f;
+    const float per_px = 0.82f;
+    const float min_y = 24.f;
+    const float max_y = 80.f;
+    float y = base + radius_pixels * per_px;
+    if (y < min_y) y = min_y;
+    if (y > max_y) y = max_y;
+    return y;
+}
+/// GM waypoint/route overlay: white ship label above marker; index position/color match drawWaypoints/drawRoutes (not ship callsign offset).
+static constexpr float gm_wp_ship_name_offset_y = 28.f;
+static constexpr float gm_wp_ship_name_offset_y_edge = 18.f;
+static constexpr float gm_wp_index_offset_y = 10.f;
+/// Must stay in sync with SpaceShip::drawOnGMRadar hull bar (top edge above blip center).
+static constexpr float gm_hull_bar_top_above_center_px = 30.f;
+
 GuiRadarView::GuiRadarView(GuiContainer* owner, string id, TargetsContainer* targets, P<PlayerSpaceship> targetSpaceship)
 : GuiElement(owner, id),
     next_ghost_dot_update(0.0),
@@ -600,6 +619,8 @@ void GuiRadarView::drawGMWaypointsAndRoutes(sf::RenderTarget& window)
         if (!ship)
             continue;
 
+        const string gm_wp_ship_name = ship->getCallSign();
+
         // Draw waypoints (no lines between them)
         for(int r = 0; r < PlayerSpaceship::max_routes; r++){
             for(int wp = PlayerSpaceship::max_waypoints_in_route - 1; wp >= 0; wp--){
@@ -611,7 +632,8 @@ void GuiRadarView::drawGMWaypointsAndRoutes(sf::RenderTarget& window)
                     object_sprite.setPosition(screen_position - sf::Vector2f(0, 10));
                     object_sprite.setScale(0.8, 0.8);
                     window.draw(object_sprite);
-                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y - 10, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y - gm_wp_index_offset_y, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y - gm_wp_ship_name_offset_y, 0, 0), gm_wp_ship_name, ACenter, 14, bold_font, sf::Color::White);
 
                     if (style != Rectangular && sf::length(screen_position - radar_screen_center) > std::min(rect.width, rect.height) * 0.5f)
                     {
@@ -620,6 +642,7 @@ void GuiRadarView::drawGMWaypointsAndRoutes(sf::RenderTarget& window)
                         object_sprite.setRotation(sf::vector2ToAngle(screen_position - radar_screen_center) - 90);
                         window.draw(object_sprite);
                         drawText(window, sf::FloatRect(screen_position.x, screen_position.y, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                        drawText(window, sf::FloatRect(screen_position.x, screen_position.y - gm_wp_ship_name_offset_y_edge, 0, 0), gm_wp_ship_name, ACenter, 14, bold_font, sf::Color::White);
                     }
                 }
             }
@@ -659,7 +682,8 @@ void GuiRadarView::drawGMWaypointsAndRoutes(sf::RenderTarget& window)
                     object_sprite.setPosition(screen_position - sf::Vector2f(0, 10));
                     object_sprite.setScale(0.8, 0.8);
                     window.draw(object_sprite);
-                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y - 10, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y - gm_wp_index_offset_y, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                    drawText(window, sf::FloatRect(screen_position.x, screen_position.y - gm_wp_ship_name_offset_y, 0, 0), gm_wp_ship_name, ACenter, 14, bold_font, sf::Color::White);
 
                     if (style != Rectangular && sf::length(screen_position - radar_screen_center) > std::min(rect.width, rect.height) * 0.5f)
                     {
@@ -668,6 +692,7 @@ void GuiRadarView::drawGMWaypointsAndRoutes(sf::RenderTarget& window)
                         object_sprite.setRotation(sf::vector2ToAngle(screen_position - radar_screen_center) - 90);
                         window.draw(object_sprite);
                         drawText(window, sf::FloatRect(screen_position.x, screen_position.y, 0, 0), string(wp + 1), ACenter, 18, bold_font, colorConfig.ship_waypoint_text);
+                        drawText(window, sf::FloatRect(screen_position.x, screen_position.y - gm_wp_ship_name_offset_y_edge, 0, 0), gm_wp_ship_name, ACenter, 14, bold_font, sf::Color::White);
                     }
                 }
             }
@@ -896,7 +921,7 @@ void GuiRadarView::drawObjects(sf::RenderTarget& window_normal, sf::RenderTarget
                 window = &window_alpha;
             obj->drawOnRadar(*window, object_position_on_screen, scale, view_rotation, long_range);
             if (show_callsigns && obj->getCallSign() != "")
-                drawText(*window, sf::FloatRect(object_position_on_screen.x, object_position_on_screen.y - 15, 0, 0), obj->getCallSign(), ACenter, 15, bold_font);
+                drawText(*window, sf::FloatRect(object_position_on_screen.x, object_position_on_screen.y - radarCallsignOffsetY(r), 0, 0), obj->getCallSign(), ACenter, 15, bold_font);
         }
     }
     if (my_spaceship)
@@ -919,7 +944,13 @@ void GuiRadarView::drawObjectsGM(sf::RenderTarget& window)
         {
             obj->drawOnGMRadar(window, object_position_on_screen, scale, view_rotation, long_range);
             if (show_gm_callsigns && obj->getCallSign() != "")
-                drawText(window, sf::FloatRect(object_position_on_screen.x, object_position_on_screen.y - 15, 0, 0), obj->getCallSign(), ACenter, 15, bold_font);
+            {
+                float callsign_offset_y = radarCallsignOffsetY(r);
+                // Zoomed-in GM view draws a hull bar above the blip; keep callsign above it (ACenter 15px font).
+                if (!long_range && P<SpaceShip>(obj))
+                    callsign_offset_y = std::max(callsign_offset_y, gm_hull_bar_top_above_center_px + 14.f);
+                drawText(window, sf::FloatRect(object_position_on_screen.x, object_position_on_screen.y - callsign_offset_y, 0, 0), obj->getCallSign(), ACenter, 15, bold_font);
+            }
         }
     }
 }
