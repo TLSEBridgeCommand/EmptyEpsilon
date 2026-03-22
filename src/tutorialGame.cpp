@@ -34,6 +34,7 @@
 #include "gui/gui2_button.h"
 #include "gui/gui2_overlay.h"
 #include "gui/gui2_label.h"
+#include "gui/gui2_autolayout.h"
 
 ///The TutorialGame object is normally never created.
 /// And it only used to setup the special tutorial level.
@@ -135,57 +136,68 @@ void TutorialGame::createScreens()
         (new GuiButton(this, "", tr("Reset"), [this]()
         {
             finish();
-        }))->setPosition(-20, 20, ATopRight)->setSize(120, 50);
+        }))->setPosition(-16, 20, ATopRight)->setSize(200, 50);
     }
-    
-    // Create "End Tutorial" button in bottom right
+
+    // Create "End Tutorial" button in top right (inset so it stays inside the canvas)
     end_tutorial_button = new GuiButton(this, "END_TUTORIAL_BUTTON", tr("End Tutorial"), [this]() {
         showEndTutorialConfirmation();
     });
-    end_tutorial_button->setPosition(-20, 20, ATopRight)->setSize(150, 50);
-    
+    if (repeated_tutorial)
+        end_tutorial_button->setPosition(-16, 78, ATopRight)->setSize(220, 50);
+    else
+        end_tutorial_button->setPosition(-16, 20, ATopRight)->setSize(220, 50);
+
     // Create end tutorial confirmation dialog
     confirm_overlay = new GuiOverlay(this, "END_TUTORIAL_CONFIRM", sf::Color(0, 0, 0, 192));
     confirm_overlay->setBlocking(true)->hide();
-    
+
     confirm_panel = new GuiPanel(confirm_overlay, "CONFIRM_PANEL");
-    confirm_panel->setPosition(0, 0, ACenter)->setSize(500, 200);
-    
+    confirm_panel->setPosition(0, 0, ACenter)->setSize(560, 220);
+
     confirm_label = new GuiLabel(confirm_panel, "CONFIRM_LABEL", tr("Would you like to end this tutorial?"), 30);
-    confirm_label->setPosition(0, 20, ATopCenter)->setSize(480, 80);
+    confirm_label->setPosition(0, 24, ATopCenter)->setSize(520, 96);
     confirm_label->setAlignment(ACenter);
-    
-    confirm_yes_button = new GuiButton(confirm_panel, "CONFIRM_YES_BUTTON", tr("Yes"), [this]() {
-        finish();
-    });
-    confirm_yes_button->setPosition(-20, -20, ABottomLeft)->setSize(220, 50);
-    
-    confirm_cancel_button = new GuiButton(confirm_panel, "CONFIRM_CANCEL_BUTTON", tr("Cancel"), [this]() {
-        hideEndTutorialConfirmation();
-    });
-    confirm_cancel_button->setPosition(20, -20, ABottomRight)->setSize(220, 50);
-    
+
+    {
+        GuiAutoLayout* confirm_btn_row = new GuiAutoLayout(confirm_panel, "CONFIRM_BTN_ROW", GuiAutoLayout::LayoutVerticalColumns);
+        confirm_btn_row->setPosition(0, -20, ABottomCenter)->setSize(520, 54);
+        confirm_btn_row->setMargins(20, 0, 20, 20);
+        confirm_yes_button = new GuiButton(confirm_btn_row, "CONFIRM_YES_BUTTON", tr("Yes"), [this]() {
+            finish();
+        });
+        confirm_yes_button->setTextSize(28)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+        confirm_cancel_button = new GuiButton(confirm_btn_row, "CONFIRM_CANCEL_BUTTON", tr("Cancel"), [this]() {
+            hideEndTutorialConfirmation();
+        });
+        confirm_cancel_button->setTextSize(28)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
+
     // Create inactivity warning dialog
     warning_overlay = new GuiOverlay(this, "INACTIVITY_WARNING", sf::Color(0, 0, 0, 192));
     warning_overlay->setBlocking(true)->hide();
-    
+
     warning_panel = new GuiPanel(warning_overlay, "WARNING_PANEL");
-    warning_panel->setPosition(0, 0, ACenter)->setSize(600, 250);
-    
+    warning_panel->setPosition(0, 0, ACenter)->setSize(640, 270);
+
     warning_label = new GuiLabel(warning_panel, "WARNING_LABEL", tr("No input detected for 5 minutes.\nThe tutorial will be reset if no action is taken in 30 seconds."), 30);
-    warning_label->setPosition(0, 20, ATopCenter)->setSize(580, 120);
+    warning_label->setPosition(0, 24, ATopCenter)->setSize(600, 132);
     warning_label->setAlignment(ACenter);
-    
-    continue_button = new GuiButton(warning_panel, "CONTINUE_BUTTON", tr("Continue"), [this]() {
-        hideInactivityWarning();
-        resetInactivityTimer();
-    });
-    continue_button->setPosition(-20, -20, ABottomLeft)->setSize(280, 50);
-    
-    end_button = new GuiButton(warning_panel, "END_BUTTON", tr("End Tutorial"), [this]() {
-        finish();
-    });
-    end_button->setPosition(20, -20, ABottomRight)->setSize(280, 50);
+
+    {
+        GuiAutoLayout* warning_btn_row = new GuiAutoLayout(warning_panel, "WARNING_BTN_ROW", GuiAutoLayout::LayoutVerticalColumns);
+        warning_btn_row->setPosition(0, -20, ABottomCenter)->setSize(600, 54);
+        warning_btn_row->setMargins(20, 0, 20, 20);
+        continue_button = new GuiButton(warning_btn_row, "CONTINUE_BUTTON", tr("Continue"), [this]() {
+            hideInactivityWarning();
+            resetInactivityTimer();
+        });
+        continue_button->setTextSize(28)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+        end_button = new GuiButton(warning_btn_row, "END_BUTTON", tr("End Tutorial"), [this]() {
+            finish();
+        });
+        end_button->setTextSize(28)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
     
     hideAllScreens();
 
