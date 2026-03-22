@@ -124,6 +124,7 @@ set(SOURCES
 	src/shipCargo.cpp
 	src/threatLevelEstimate.cpp
 	src/preferenceManager.cpp
+	src/instanceNameDisplay.cpp
 	src/pathPlanner.cpp
 	src/epsilonServer.cpp
 	src/particleEffect.cpp

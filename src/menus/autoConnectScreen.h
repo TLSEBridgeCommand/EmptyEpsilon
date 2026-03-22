@@ -38,6 +38,9 @@ class AutoConnectScreen : public GuiCanvas, public Updatable
     float update_timer;
     /** Delay after scenario_started before picking ship by index, so replication can settle. */
     float ship_selection_delay;
+    /** LAN server display name from scanner (empty if joining by raw IP only). */
+    string connect_broadcast_name_for_index;
+    bool applied_auto_2s1u_session_ = false;
 public:
     AutoConnectScreen(ECrewPosition crew_position, int auto_mainscreen, bool control_main_screen, string ship_filter);
     void autoConnectPasswordEntryOnOkClick(P<PlayerSpaceship> ship = nullptr);

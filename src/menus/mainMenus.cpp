@@ -3,6 +3,7 @@
 #include "mainMenus.h"
 #include "main.h"
 #include "preferenceManager.h"
+#include "instanceNameDisplay.h"
 #include "epsilonServer.h"
 #include "playerInfo.h"
 #include "gameGlobalInfo.h"
@@ -168,7 +169,7 @@ MainMenu::MainMenu()
 
     if (PreferencesManager::get("instance_name") != "")
     {
-        (new GuiLabel(this, "", PreferencesManager::get("instance_name"), 25))->setAlignment(ACenterLeft)->setPosition(20, 20, ATopLeft)->setSize(0, 18);
+        (new GuiLabel(this, "", formatInstanceNameForDisplay(PreferencesManager::get("instance_name")), 25))->setAlignment(ACenterLeft)->setPosition(20, 20, ATopLeft)->setSize(0, 18);
     }
 
 #ifdef DEBUG

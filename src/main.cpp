@@ -24,6 +24,7 @@
 #include "epsilonServer.h"
 #include "httpScriptAccess.h"
 #include "preferenceManager.h"
+#include "instanceNameDisplay.h"
 #include "networkRecorder.h"
 #include "tutorialGame.h"
 
@@ -237,10 +238,9 @@ int main(int argc, char** argv)
                 fsaa = 2;
         }
         P<WindowManager> window_manager = new WindowManager(width, height, fullscreen, warpPostProcessor, fsaa);
-        if (PreferencesManager::get("instance_name") != "")
-            window_manager->setTitle("EmptyEpsilon - " + PreferencesManager::get("instance_name"));
         window_manager->setAllowVirtualResize(true);
         engine->registerObject("windowManager", window_manager);
+        refreshWindowTitleWithInstanceDisplay();
     }
     if (PreferencesManager::get("touchscreen").toInt())
     {
@@ -354,6 +354,8 @@ int main(int argc, char** argv)
         PreferencesManager::set("autostationslist", "");
     if (PreferencesManager::get("autoconnect_ship_index").empty())
         PreferencesManager::set("autoconnect_ship_index", "1");
+
+    clearInstanceNameIndexOffsetOnSessionEnd();
 
     // Set shaders to default.
     PreferencesManager::set("disable_shaders", PostProcessor::isEnabled() ? 0 : 1);

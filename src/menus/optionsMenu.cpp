@@ -3,6 +3,7 @@
 #include "optionsMenu.h"
 #include "main.h"
 #include "preferenceManager.h"
+#include "instanceNameDisplay.h"
 
 #include "gui/gui2_autolayout.h"
 #include "gui/gui2_overlay.h"
@@ -168,6 +169,11 @@ OptionsMenu::OptionsMenu()
             PreferencesManager::set("server_name", text);
         })->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     }
+
+    (new GuiToggleButton(interface_page, "AUTO_2S1U_CLIENT", tr("options", "On 2S1U +2 Ship Index"), [](bool value)
+    {
+        PreferencesManager::set(kPrefsAuto2S1uClientOffset, value ? "1" : "0");
+    }))->setValue(PreferencesManager::get(kPrefsAuto2S1uClientOffset, "0") == "1")->setSize(GuiElement::GuiSizeMax, 50);
 
     // Right column, auto layout. Draw first element 50px from top.
     // Music preview jukebox.

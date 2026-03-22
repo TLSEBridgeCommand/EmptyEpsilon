@@ -1747,6 +1747,11 @@ msgctxt "options"
 msgid "Save"
 msgstr ""
 
+#: src/menus/optionsMenu.cpp
+msgctxt "options"
+msgid "On 2S1U +2 Ship Index"
+msgstr "On 2S1U +2 Ship Index"
+
 #: src/screens/crew4/tacticalScreen.cpp:72
 #: src/screens/crew1/singlePilotScreen.cpp:76
 msgid "Shields"

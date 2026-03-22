@@ -35,7 +35,7 @@ ServerBrowserMenu::ServerBrowserMenu(SearchSource source)
     lan_internet_selector->setOptions({"LAN", "Internet"})->setSelectionIndex(source == Local ? 0 : 1)->setPosition(0, -50, ABottomCenter)->setSize(300, 50);
 
     connect_button = new GuiButton(this, "CONNECT", "Connect", [this]() {
-        new JoinServerScreen(lan_internet_selector->getSelectionIndex() == 0 ? Local : Internet, sf::IpAddress(manual_ip->getText()));
+        new JoinServerScreen(lan_internet_selector->getSelectionIndex() == 0 ? Local : Internet, sf::IpAddress(manual_ip->getText().strip()));
         destroy();
     });
     connect_button->setPosition(-50, -50, ABottomRight)->setSize(300, 50);

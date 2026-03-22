@@ -1,4 +1,5 @@
 #include "epsilonServer.h"
+#include "instanceNameDisplay.h"
 #include "playerInfo.h"
 #include "gameGlobalInfo.h"
 #include "preferenceManager.h"
@@ -52,6 +53,7 @@ void EpsilonServer::onDisconnectClient(int32_t client_id)
 void disconnectFromServer()
 {
     soundManager->stopMusic();
+    clearInstanceNameIndexOffsetOnSessionEnd();
 
     try
     {

@@ -8,6 +8,7 @@
 #include "epsilonServer.h"
 #include "gameGlobalInfo.h"
 #include "playerInfo.h"
+#include "instanceNameDisplay.h"
 
 #include "gui/gui2_label.h"
 #include "gui/gui2_overlay.h"
@@ -16,6 +17,17 @@
 #include "gui/gui2_togglebutton.h"
 #include "gui/gui2_button.h"
 #include "../screenComponents/numericEntryPanel.h"
+
+static int autoconnectShipSlotWithOptional2S1u(int autoconnect_ship_index_1based, const string& broadcast_name)
+{
+    int slot = autoconnect_ship_index_1based - 1;
+    if (slot < 0) slot = 0;
+    if (PreferencesManager::get(kPrefsAuto2S1uClientOffset, "0") == "1" && broadcastServerNameIs2S1UMissionLayout(broadcast_name))
+        slot += 2;
+    if (slot >= GameGlobalInfo::max_player_ships) slot = GameGlobalInfo::max_player_ships - 1;
+    if (slot < 0) slot = 0;
+    return slot;
+}
 
 AutoConnectScreen::AutoConnectScreen(ECrewPosition crew_position, int auto_mainscreen, bool control_main_screen, string ship_filter)
 : crew_position(crew_position), auto_mainscreen(auto_mainscreen), control_main_screen(control_main_screen), cancel_button(nullptr), cancel_button_y_set(false), update_timer(0.0f), ship_selection_delay(1.0f)
@@ -82,7 +94,7 @@ AutoConnectScreen::AutoConnectScreen(ECrewPosition crew_position, int auto_mains
 
     if (PreferencesManager::get("instance_name") != "")
     {
-        (new GuiLabel(this, "", PreferencesManager::get("instance_name"), 25))->setAlignment(ACenterLeft)->setPosition(20, 20, ATopLeft)->setSize(0, 18);
+        (new GuiLabel(this, "", formatInstanceNameForDisplay(PreferencesManager::get("instance_name")), 25))->setAlignment(ACenterLeft)->setPosition(20, 20, ATopLeft)->setSize(0, 18);
     }
 }
 
@@ -119,6 +131,8 @@ void AutoConnectScreen::update(float delta)
         if (autoconnect_address != "") {
             status_label->setText(tr("autoconnect", "Using autoconnect server {address}").format({{"address", autoconnect_address}}));
             connect_to_address = autoconnect_address;
+            connect_broadcast_name_for_index = "";
+            applied_auto_2s1u_session_ = false;
             if (game_client)
                 disconnectFromServer();
             new GameClient(VERSION_NUMBER, autoconnect_address);
@@ -159,6 +173,8 @@ void AutoConnectScreen::update(float delta)
                             {
                                 status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", server.name}}));
                                 connect_to_address = server.address;
+                                connect_broadcast_name_for_index = server.name;
+                                applied_auto_2s1u_session_ = false;
                                 if (game_client)
                                     disconnectFromServer();
                                 new GameClient(VERSION_NUMBER, server.address);
@@ -184,6 +200,8 @@ void AutoConnectScreen::update(float delta)
                     // In single-server mode, just connect to the first available server
                     status_label->setText(tr("autoconnect", "Found server {name}").format({{"name", serverList[0].name}}));
                     connect_to_address = serverList[0].address;
+                    connect_broadcast_name_for_index = serverList[0].name;
+                    applied_auto_2s1u_session_ = false;
                     if (game_client)
                         disconnectFromServer();
                     new GameClient(VERSION_NUMBER, serverList[0].address);
@@ -254,6 +272,11 @@ void AutoConnectScreen::update(float delta)
         case GameClient::Connected:
             if (game_client->getClientId() > 0)
             {
+                if (!applied_auto_2s1u_session_)
+                {
+                    applied_auto_2s1u_session_ = true;
+                    applyAuto2S1uSessionDisplayOffset(connect_broadcast_name_for_index);
+                }
                 my_player_info = nullptr;
                 foreach(PlayerInfo, i, player_info_list)
                     if (i->client_id == game_client->getClientId())
@@ -289,10 +312,9 @@ void AutoConnectScreen::update(float delta)
                         }
 
                         status_label->setText(tr("autoconnect", "Looking for available ships..."));
-                        int preferred_index = PreferencesManager::get("autoconnect_ship_index", "1").toInt();
-                        preferred_index = preferred_index - 1;
-                        if (preferred_index < 0) preferred_index = 0;
-                        if (preferred_index >= GameGlobalInfo::max_player_ships) preferred_index = GameGlobalInfo::max_player_ships - 1;
+                        int preferred_index = autoconnectShipSlotWithOptional2S1u(
+                            PreferencesManager::get("autoconnect_ship_index", "1").toInt(),
+                            connect_broadcast_name_for_index);
 
                         bool connected_to_ship = false;
                         if (isValidShip(preferred_index))
