@@ -5,11 +5,17 @@
 #include "gui/gui2_label.h"
 #include "gui/gui2_progressbar.h"
 #include "gui/gui2_panel.h"
+#include <algorithm>
 
 MineSweeper::MineSweeper(GuiPanel* owner, GuiHackingDialog* parent, int difficulty)
 : MiniGame(owner, parent, difficulty) {
     field_size = difficulty * 2 + 6;
-    bomb_count = difficulty * 2 + 6;
+    // Bomb density by tier: diff 0 -> 1/8, 1 -> 1/6, 2+ -> 1/4 (extra levels keep hardest density).
+    const int density_tier = std::min(std::max(difficulty, 0), 2);
+    const int bomb_divisor = 8 - density_tier * 2;
+    bomb_count = (field_size * field_size) / bomb_divisor;
+    if (bomb_count < 1)
+        bomb_count = 1;
     for(int x=0; x<field_size; x++)
     {
         for(int y=0; y<field_size; y++)
