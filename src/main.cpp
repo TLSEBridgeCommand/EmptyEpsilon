@@ -1,5 +1,7 @@
 #include <memory>
+#include <algorithm>
 #include <string.h>
+#include <SFML/Graphics.hpp>
 #include <i18n.h>
 #include <multiplayer_proxy.h>
 #ifndef _MSC_VER
@@ -53,6 +55,70 @@ RenderLayer* hudLayer;
 RenderLayer* mouseLayer;
 PostProcessor* glitchPostProcessor;
 PostProcessor* warpPostProcessor;
+
+namespace
+{
+/** Fullscreen splash before Engine / main window. Uses resources/splash_startup.png if present, else resources/logo_full.png. Skip with startup_splash=0 in options.ini or headless=1. */
+void showStartupSplashScreen()
+{
+    if (PreferencesManager::get("headless") != "")
+        return;
+    if (PreferencesManager::get("startup_splash", "1").toInt() == 0)
+        return;
+
+    sf::Texture tex;
+    static const char* const paths[] = {"resources/splash_startup.png", "resources/logo_full.png", nullptr};
+    bool loaded = false;
+    for (int i = 0; paths[i]; ++i)
+    {
+        if (tex.loadFromFile(paths[i]))
+        {
+            loaded = true;
+            break;
+        }
+    }
+    if (!loaded)
+        return;
+
+    const sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    sf::RenderWindow window(desktop, "EmptyEpsilon", sf::Style::Fullscreen);
+    window.setVerticalSyncEnabled(true);
+    window.setActive(true);
+
+    sf::Sprite sprite(tex);
+    const sf::Vector2u ws = window.getSize();
+    const sf::Vector2u ts = tex.getSize();
+    const float sx = float(ws.x) / float(std::max(1u, ts.x));
+    const float sy = float(ws.y) / float(std::max(1u, ts.y));
+    const float scale = std::min(sx, sy);
+    sprite.setScale(scale, scale);
+    sprite.setPosition(
+        (float(ws.x) - float(ts.x) * scale) * 0.5f,
+        (float(ws.y) - float(ts.y) * scale) * 0.5f);
+
+    sf::Clock clock;
+    const float min_show_sec = 0.85f;
+    bool skip = false;
+    while (window.isOpen() && clock.getElapsedTime().asSeconds() < min_show_sec && !skip)
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
+                skip = true;
+                break;
+            }
+            if (event.type == sf::Event::KeyPressed || event.type == sf::Event::MouseButtonPressed)
+                skip = true;
+        }
+        window.clear(sf::Color::Black);
+        window.draw(sprite);
+        window.display();
+    }
+    window.close();
+}
+} // namespace
 
 int main(int argc, char** argv)
 {
@@ -125,6 +191,8 @@ int main(int argc, char** argv)
         *value++ = '\0';
         PreferencesManager::set(string(argv[n]).strip(), string(value).strip());
     }
+
+    showStartupSplashScreen();
 
     new Engine();
 
