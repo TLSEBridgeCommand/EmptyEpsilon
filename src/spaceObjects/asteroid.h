@@ -26,6 +26,9 @@ public:
 
 class VisualAsteroid : public SpaceObject
 {
+private:
+    /// Visual-only: do not register physics or collision.
+    void clearPhysicalCollision();
 public:
     float rotation_speed;
     float z;

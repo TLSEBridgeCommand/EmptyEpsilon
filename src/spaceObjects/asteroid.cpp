@@ -98,6 +98,12 @@ REGISTER_SCRIPT_SUBCLASS(VisualAsteroid, SpaceObject)
 }
 
 REGISTER_MULTIPLAYER_CLASS(VisualAsteroid, "VisualAsteroid");
+
+void VisualAsteroid::clearPhysicalCollision()
+{
+    setCollisionRadius(0.f);
+}
+
 VisualAsteroid::VisualAsteroid()
 : SpaceObject(random(110, 130), "VisualAsteroid")
 {
@@ -112,13 +118,18 @@ VisualAsteroid::VisualAsteroid()
 
     registerMemberReplication(&z);
     registerMemberReplication(&size);
+
+    clearPhysicalCollision();
 }
 
 void VisualAsteroid::draw3D()
 {
 #if FEATURE_3D_RENDERING
     if (size != getRadius())
+    {
         setRadius(size);
+        clearPhysicalCollision();
+    }
 
     glTranslatef(0, 0, z);
     glRotatef(engine->getElapsedTime() * rotation_speed, 0, 0, 1);
@@ -138,4 +149,5 @@ void VisualAsteroid::setSize(float size)
     setRadius(size);
     while(fabs(z) < size * 2)
         z *= random(1.2, 2.0);
+    clearPhysicalCollision();
 }
