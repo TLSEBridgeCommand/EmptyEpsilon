@@ -8,6 +8,7 @@
 #include <map>
 #include <iomanip>
 #include <chrono>
+#include <exception>
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -280,9 +281,12 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
             case EXCEPTION_ILLEGAL_INSTRUCTION:
                 crashReason = "Windows Exception: Illegal Instruction";
                 break;
-            default:
-                crashReason = "Windows Exception: Code 0x" + std::to_string(exceptionCode);
+            default: {
+                std::stringstream code_ss;
+                code_ss << "Windows Exception: Code 0x" << std::hex << exceptionCode << std::dec;
+                crashReason = code_ss.str();
                 break;
+            }
         }
     }
     
@@ -299,9 +303,24 @@ void CrashLogger::setupCrashHandlers()
     // Windows: Set up structured exception handler
     SetUnhandledExceptionFilter(exceptionHandler);
     
-    // Also catch C++ exceptions
+    // Uncaught C++ exceptions call std::terminate; try to include std::exception::what() when available.
     std::set_terminate([]() {
-        CrashLogger::getInstance()->saveCrashContext("C++ Exception");
+        std::string reason = "C++ Exception";
+        try
+        {
+            if (std::current_exception())
+                std::rethrow_exception(std::current_exception());
+        }
+        catch (const std::exception& e)
+        {
+            reason += std::string(": ");
+            reason += e.what();
+        }
+        catch (...)
+        {
+            reason += " (non-standard exception type)";
+        }
+        CrashLogger::getInstance()->saveCrashContext(reason);
         std::abort();
     });
     
@@ -332,9 +351,23 @@ void CrashLogger::setupCrashHandlers()
         exit(1);
     });
     
-    // Set up C++ exception handler
     std::set_terminate([]() {
-        CrashLogger::getInstance()->saveCrashContext("C++ Exception");
+        std::string reason = "C++ Exception";
+        try
+        {
+            if (std::current_exception())
+                std::rethrow_exception(std::current_exception());
+        }
+        catch (const std::exception& e)
+        {
+            reason += std::string(": ");
+            reason += e.what();
+        }
+        catch (...)
+        {
+            reason += " (non-standard exception type)";
+        }
+        CrashLogger::getInstance()->saveCrashContext(reason);
         std::abort();
     });
 #endif
@@ -617,20 +650,22 @@ std::string CrashLogger::generateStackTrace(void* exceptionContext)
     std::stringstream ss;
     
 #ifdef _WIN32
-    // Initialize symbol handler
     HANDLE process = GetCurrentProcess();
-    SymInitialize(process, NULL, TRUE);
-    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
-    
-    // Capture stack trace
+    if (!SymInitialize(process, NULL, TRUE))
+    {
+        ss << "  (SymInitialize failed; stack addresses unavailable)\n";
+        return ss.str();
+    }
+    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
+
     void* stack[62];
     USHORT frames = 0;
-    
-    if (exceptionContext) {
-        // Use the exception context if provided
+
+    if (exceptionContext)
+    {
         CONTEXT* ctx = (CONTEXT*)exceptionContext;
         STACKFRAME64 stackFrame = {};
-        
+
 #ifdef _M_IX86
         stackFrame.AddrPC.Offset = ctx->Eip;
         stackFrame.AddrPC.Mode = AddrModeFlat;
@@ -646,50 +681,76 @@ std::string CrashLogger::generateStackTrace(void* exceptionContext)
         stackFrame.AddrFrame.Offset = ctx->Rbp;
         stackFrame.AddrFrame.Mode = AddrModeFlat;
 #endif
-        
-        frames = 0;
+
         while (StackWalk64(
 #ifdef _M_IX86
-            IMAGE_FILE_MACHINE_I386,
+                   IMAGE_FILE_MACHINE_I386,
 #else
-            IMAGE_FILE_MACHINE_AMD64,
+                   IMAGE_FILE_MACHINE_AMD64,
 #endif
-            process, GetCurrentThread(), &stackFrame, exceptionContext,
-            NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL) && frames < 62) {
+                   process, GetCurrentThread(), &stackFrame, exceptionContext, NULL, SymFunctionTableAccess64,
+                   SymGetModuleBase64, NULL)
+               && frames < 62)
+        {
             stack[frames++] = (void*)stackFrame.AddrPC.Offset;
         }
-    } else {
-        // Use current stack
+    }
+    else
+    {
         frames = CaptureStackBackTrace(0, 62, stack, NULL);
     }
-    
-    // Resolve symbols
-    SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
-    symbol->MaxNameLen = 255;
+
+    const DWORD kMaxSymName = 4095;
+    SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + kMaxSymName + 1, 1);
+    symbol->MaxNameLen = kMaxSymName;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-    
+
     IMAGEHLP_LINE64 line = {};
     line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
     DWORD displacement = 0;
-    
-    for (USHORT i = 0; i < frames; i++) {
+
+    for (USHORT i = 0; i < frames; i++)
+    {
         DWORD64 address = (DWORD64)stack[i];
-        
-        if (SymFromAddr(process, address, NULL, symbol)) {
+
+        if (SymFromAddr(process, address, NULL, symbol))
+        {
             ss << "  [" << i << "] " << symbol->Name;
-            
-            if (SymGetLineFromAddr64(process, address, &displacement, &line)) {
+
+            if (SymGetLineFromAddr64(process, address, &displacement, &line))
                 ss << " (" << line.FileName << ":" << line.LineNumber << ")";
-            }
-            
+
             ss << " [0x" << std::hex << address << std::dec << "]" << std::endl;
-        } else {
-            ss << "  [" << i << "] <unknown> [0x" << std::hex << address << std::dec << "]" << std::endl;
+        }
+        else
+        {
+            DWORD64 moduleBase = SymGetModuleBase64(process, address);
+            if (moduleBase != 0)
+            {
+                char modulePath[MAX_PATH];
+                if (GetModuleFileNameA((HMODULE)moduleBase, modulePath, MAX_PATH) > 0)
+                {
+                    const char* base = strrchr(modulePath, '\\');
+                    base = base ? base + 1 : modulePath;
+                    DWORD64 rva = address - moduleBase;
+                    ss << "  [" << i << "] " << base << "+0x" << std::hex << rva << std::dec
+                       << " (no symbol; place PDB next to exe/DLL for names) [0x" << std::hex << address << std::dec << "]"
+                       << std::endl;
+                }
+                else
+                    ss << "  [" << i << "] <unknown> [0x" << std::hex << address << std::dec << "]" << std::endl;
+            }
+            else
+                ss << "  [" << i << "] <unknown> [0x" << std::hex << address << std::dec << "]" << std::endl;
         }
     }
-    
+
     free(symbol);
     SymCleanup(process);
+
+    ss << "\n"
+          "Stack hint (Windows): If you only see module+offset, copy EmptyEpsilon.pdb (and SFML/other PDBs if "
+          "custom-built) next to the binaries so DbgHelp can resolve functions and lines.\n";
     
 #elif defined(__linux__) || defined(__APPLE__)
     void* array[62];
