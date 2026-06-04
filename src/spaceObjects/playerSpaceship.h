@@ -344,6 +344,7 @@ public:
     void commandCancelMoveCargo(int index);
     void commandSetDockMoveTarget(int srcIdx, int destIdx);
     void commandSetDockEnergyRequest(int index, float value);
+    void commandTransferDockMissile(int dock_index, EMissileWeapons weapon, bool to_cargo);
     void commandScanDone();
     void commandScanCancel();
     void commandSetAlertLevel(EAlertLevel level);

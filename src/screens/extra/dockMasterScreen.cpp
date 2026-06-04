@@ -186,44 +186,36 @@ DockMasterScreen::DockMasterScreen(GuiContainer *owner)
         weapons_stock_cargo[n]->setPosition(150,0)->setSize(75, 30);
 
         weapons_stock_p1[n] = new GuiButton(weapons_layout[n],"","+ 1", [this, n]() {
-            if (my_spaceship)
-            {
-                Dock &dockData = my_spaceship->docks[index];
-                P<Cargo> cargo = dockData.getCargo();
-
-                if (my_spaceship->getSystemEffectiveness(SYS_Docks) <= 0)
-                    return;
-
-                if (my_spaceship->weapon_storage[n] <= 0)
-                    return;
-
-                if (cargo->getWeaponStorageMax(EMissileWeapons(n)) == cargo->getWeaponStorage(EMissileWeapons(n)))
-                    return;
-
-                my_spaceship->weapon_storage[n] -= 1;
-                cargo->setWeaponStorage(EMissileWeapons(n), cargo->getWeaponStorage(EMissileWeapons(n)) + 1);
-            }
+            if (!my_spaceship)
+                return;
+            Dock &dockData = my_spaceship->docks[index];
+            P<Cargo> cargo = dockData.getCargo();
+            if (!cargo)
+                return;
+            if (my_spaceship->getSystemEffectiveness(SYS_Docks) <= 0)
+                return;
+            if (my_spaceship->weapon_storage[n] <= 0)
+                return;
+            if (cargo->getWeaponStorageMax(EMissileWeapons(n)) == cargo->getWeaponStorage(EMissileWeapons(n)))
+                return;
+            my_spaceship->commandTransferDockMissile(index, EMissileWeapons(n), true);
         });
         weapons_stock_p1[n]->setSize(75, 40);
 
         weapons_stock_m1[n] = new GuiButton(weapons_layout[n],"","- 1", [this,n]() {
-            if (my_spaceship)
-            {
-                Dock &dockData = my_spaceship->docks[index];
-                P<Cargo> cargo = dockData.getCargo();
-
-                if (my_spaceship->getSystemEffectiveness(SYS_Docks) <= 0)
-                    return;
-
-                if (cargo->getWeaponStorage(EMissileWeapons(n)) <= 0)
-                    return;
-
-                if (my_spaceship->weapon_storage[n] == my_spaceship->weapon_storage_max[n])
-                    return;
-
-                my_spaceship->weapon_storage[n] += 1;
-                cargo->setWeaponStorage(EMissileWeapons(n), cargo->getWeaponStorage(EMissileWeapons(n)) - 1);
-            }
+            if (!my_spaceship)
+                return;
+            Dock &dockData = my_spaceship->docks[index];
+            P<Cargo> cargo = dockData.getCargo();
+            if (!cargo)
+                return;
+            if (my_spaceship->getSystemEffectiveness(SYS_Docks) <= 0)
+                return;
+            if (cargo->getWeaponStorage(EMissileWeapons(n)) <= 0)
+                return;
+            if (my_spaceship->weapon_storage[n] == my_spaceship->weapon_storage_max[n])
+                return;
+            my_spaceship->commandTransferDockMissile(index, EMissileWeapons(n), false);
         });
         weapons_stock_m1[n]->setSize(75, 40);
 

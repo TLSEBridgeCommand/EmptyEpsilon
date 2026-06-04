@@ -322,6 +322,7 @@ static const int16_t CMD_SET_ANALYSIS_LINK = 0x003A;
 static const int16_t CMD_SET_SYSTEM_POWER_PRESET = 0x003B;
 static const int16_t CMD_SET_SYSTEM_COOLANT_PRESET = 0x003C;
 static const int16_t CMD_LOCK_FIRE = 0x003D;
+static const int16_t CMD_TRANSFER_DOCK_MISSILE = 0x003E;
 
 string alertLevelToString(EAlertLevel level)
 {
@@ -1674,7 +1675,46 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
                     addToShipLog(tr("Fire down"),sf::Color::Yellow,weaponsOfficer);
             }
         }
-        break;     
+        break;
+    case CMD_TRANSFER_DOCK_MISSILE:
+        {
+            int32_t dock_index;
+            int8_t weapon_byte;
+            int8_t to_cargo_byte;
+            packet >> dock_index >> weapon_byte >> to_cargo_byte;
+            if (getSystemEffectiveness(SYS_Docks) <= 0.0f)
+                break;
+            if (dock_index < 0 || dock_index >= max_docks_count)
+                break;
+            if (weapon_byte < 0 || weapon_byte >= MW_Count)
+                break;
+            Dock& dockData = docks[dock_index];
+            if (dockData.state != EDockState::Docked || dockData.dock_type != Dock_Weapons)
+                break;
+            P<Cargo> cargo = dockData.getCargo();
+            if (!cargo)
+                break;
+            const EMissileWeapons mw = EMissileWeapons(weapon_byte);
+            if (to_cargo_byte)
+            {
+                if (weapon_storage[weapon_byte] <= 0)
+                    break;
+                if (cargo->getWeaponStorageMax(mw) == cargo->getWeaponStorage(mw))
+                    break;
+                weapon_storage[weapon_byte] -= 1;
+                cargo->setWeaponStorage(mw, cargo->getWeaponStorage(mw) + 1);
+            }
+            else
+            {
+                if (cargo->getWeaponStorage(mw) <= 0)
+                    break;
+                if (weapon_storage[weapon_byte] >= weapon_storage_max[weapon_byte])
+                    break;
+                weapon_storage[weapon_byte] += 1;
+                cargo->setWeaponStorage(mw, cargo->getWeaponStorage(mw) - 1);
+            }
+        }
+        break;
     case CMD_SET_MAIN_SCREEN_SETTING:
         packet >> main_screen_setting;
         break;
@@ -2606,6 +2646,13 @@ void PlayerSpaceship::commandSetDockEnergyRequest(int index, float value)
 {
     sf::Packet packet;
     packet << CMD_SET_DOCK_ENERGY_REQUEST << index << value;
+    sendClientCommand(packet);
+}
+
+void PlayerSpaceship::commandTransferDockMissile(int dock_index, EMissileWeapons weapon, bool to_cargo)
+{
+    sf::Packet packet;
+    packet << CMD_TRANSFER_DOCK_MISSILE << int32_t(dock_index) << int8_t(weapon) << int8_t(to_cargo ? 1 : 0);
     sendClientCommand(packet);
 }
 
