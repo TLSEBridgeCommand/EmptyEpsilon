@@ -21,6 +21,14 @@ static uint32_t hashPosition(sf::Vector2f position)
 
 P<PathPlannerManager> PathPlannerManager::instance;
 
+/** CPU pathfinding should ignore some hazards on Fly towards (ignore all) - this is currently mines and wormholes.*/
+static bool pathPlannerSkipAvoid(CpuShip* owner, const string& class_id)
+{
+    if (owner->getOrder() != AI_FlyTowardsBlind)
+        return false;
+    return class_id == "Mine" || class_id == "WormHole";
+}
+
 void PathPlannerManager::addAvoidObject(P<SpaceObject> source, float size)
 {
     // Make a classification for small objects which fit in a grid, so the checkToAvoid function does not has to iterate on all objects.
@@ -169,6 +177,11 @@ bool PathPlanner::checkToAvoid(CpuShip *owner, sf::Vector2f start, sf::Vector2f 
     {
         if (i->source)
         {
+            if (pathPlannerSkipAvoid(owner, i->source->getMultiplayerClassIdentifier()))
+            {
+                i++;
+                continue;
+            }
             sf::Vector2f position = i->source->getPosition();
             float f = sf::dot(startEndDiff, position - start) / startEndLength;
             if (f > 0 && f < startEndLength - i->size)
@@ -233,11 +246,7 @@ bool PathPlanner::checkToAvoid(CpuShip *owner, sf::Vector2f start, sf::Vector2f 
             {
                 if (i->source)
                 {
-                    if (owner->getOrder() == AI_FlyTowardsBlind && i->source->getMultiplayerClassIdentifier() == "Mine")
-                    {
-                        //~~ sweet child o' mine ~~ // ~~ what doesn't mine you make you stronger/mine a little harder ~~
-                    }
-                    else
+                    if (!pathPlannerSkipAvoid(owner, i->source->getMultiplayerClassIdentifier()))
                     {
                         sf::Vector2f position = i->source->getPosition();
                         float f = sf::dot(startEndDiff, position - start) / startEndLength;
