@@ -51,7 +51,7 @@ void FighterAI::runAttack(P<SpaceObject> target)
             {
                 if (owner->weapon_tube[n].isLoaded() && missile_fire_delay <= 0.0)
                 {
-                    float target_angle = calculateFiringSolution(target, owner->weapon_tube[n].getLoadType());
+                    float target_angle = calculateFiringSolution(target, n);
                     if (target_angle != std::numeric_limits<float>::infinity())
                     {
                         owner->weapon_tube[n].fire(target_angle);

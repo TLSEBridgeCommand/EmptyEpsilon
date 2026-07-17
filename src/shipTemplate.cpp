@@ -342,7 +342,7 @@ void ShipTemplate::setBeam(int index, float arc, float direction, float range, f
 
 void ShipTemplate::setBeamWeapon(int index, float arc, float direction, float range, float cycle_time, float damage)
 {
-    if (index < 0 || index > max_beam_weapons)
+    if (index < 0 || index >= max_beam_weapons)
         return;
     beams[index].setDirection(direction);
     beams[index].setArc(arc);
@@ -359,7 +359,7 @@ void ShipTemplate::setTractorBeam(float max_range, float drag_per_second)
 
 void ShipTemplate::setBeamWeaponDamageType(int index, int damage_type)
 {
-    if (index < 0 || index > max_beam_weapons)
+    if (index < 0 || index >= max_beam_weapons)
         return;
     if (damage_type < 0 || damage_type > DT_Count)
         beams[index].setDamageType(0);
@@ -369,7 +369,7 @@ void ShipTemplate::setBeamWeaponDamageType(int index, int damage_type)
 
 void ShipTemplate::setBeamWeaponTurret(int index, float arc, float direction, float rotation_rate)
 {
-    if (index < 0 || index > max_beam_weapons)
+    if (index < 0 || index >= max_beam_weapons)
         return;
     beams[index].setTurretArc(arc);
     beams[index].setTurretDirection(direction);
@@ -428,6 +428,8 @@ ESystem ShipTemplate::getSystemAtRoom(sf::Vector2i position)
 
 void ShipTemplate::setCollisionData(P<SpaceObject> object)
 {
+    if (!model_data)
+        return;
     model_data->setCollisionData(object);
 }
 

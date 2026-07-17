@@ -305,19 +305,17 @@ void TutorialGame::handleJoystickButton(unsigned int joystickId, unsigned int bu
 
 void TutorialGame::setPlayerShip(P<PlayerSpaceship> ship)
 {
+    if (!ship || !my_player_info)
+        return;
+
     my_player_info->commandSetShipId(ship->getMultiplayerId());
 
-    // Player ship information is managed in GameGlobalInfo::update(). However, when we start a tutorial
-    // we need to ensure that the player info is set before the screens are created, so forcibly set it here.
-    if (my_player_info)
+    if ((my_spaceship && my_spaceship->getMultiplayerId() != my_player_info->ship_id) || (my_spaceship && my_player_info->ship_id == -1) || (!my_spaceship && my_player_info->ship_id != -1))
     {
-        if ((my_spaceship && my_spaceship->getMultiplayerId() != my_player_info->ship_id) || (my_spaceship && my_player_info->ship_id == -1) || (!my_spaceship && my_player_info->ship_id != -1))
-        {
-            if (game_server)
-                my_spaceship = game_server->getObjectById(my_player_info->ship_id);
-            else
-                my_spaceship = game_client->getObjectById(my_player_info->ship_id);
-        }
+        if (game_server)
+            my_spaceship = game_server->getObjectById(my_player_info->ship_id);
+        else if (game_client)
+            my_spaceship = game_client->getObjectById(my_player_info->ship_id);
     }
 
     if (viewport == nullptr)
