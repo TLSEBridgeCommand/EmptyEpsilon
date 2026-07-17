@@ -3,6 +3,7 @@
 // #include "playerInfo.h"
 #include "particleEffect.h"
 #include "explosionEffect.h"
+#include "spaceObjects/missiles/missileWeapon.h"
 // #include "pathPlanner.h"
 
 #include "scriptInterface.h"
@@ -20,7 +21,6 @@ REGISTER_MULTIPLAYER_CLASS(InvisibleMine, "InvisibleMine");
 InvisibleMine::InvisibleMine()
 : SpaceObject(50, "InvisibleMine")
 {
-    setCollisionRadius(trigger_range);
     triggered = false;
     triggerTimeout = triggerDelay;
     // ejectTimeout = 0.0;
@@ -63,7 +63,11 @@ void InvisibleMine::drawOnGMRadar(sf::RenderTarget& window, sf::Vector2f positio
 void InvisibleMine::update(float delta)
 {
     if (!triggered)
+    {
+        if (game_server)
+            checkProximityTrigger();
         return;
+    }
     triggerTimeout -= delta;
     if (triggerTimeout <= 0)
     {
@@ -76,7 +80,9 @@ void InvisibleMine::collide(Collisionable* target, float force)
     if (!game_server || triggered)
         return;
     P<SpaceObject> hitObject = P<Collisionable>(target);
-    if (!hitObject || !hitObject->canBeTargetedBy(nullptr))
+    if (!hitObject)
+        return;
+    if (!hitObject->canBeTargetedBy(nullptr) && !P<MissileWeapon>(hitObject))
         return;
 
     triggered = true;
@@ -110,4 +116,24 @@ void InvisibleMine::explode()
 void InvisibleMine::onDestruction(ScriptSimpleCallback callback)
 {
     this->on_destruction = callback;
+}
+
+void InvisibleMine::checkProximityTrigger()
+{
+    foreach(SpaceObject, target, space_object_list)
+    {
+        if (target == this)
+            continue;
+        P<SpaceObject> hitObject = target;
+        if (!hitObject)
+            continue;
+        if (!hitObject->canBeTargetedBy(nullptr) && !P<MissileWeapon>(hitObject))
+            continue;
+        const float dist = sf::length(target->getPosition() - getPosition());
+        if (dist < trigger_range + target->getRadius())
+        {
+            triggered = true;
+            return;
+        }
+    }
 }

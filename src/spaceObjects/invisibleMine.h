@@ -35,8 +35,8 @@ public:
 
     virtual string getExportLine() override { return "InvisibleMine():setPosition(" + string(getPosition().x, 0) + ", " + string(getPosition().y, 0) + ")"; }
 
-// private:
-//     const MissileWeaponData& data;
+private:
+    void checkProximityTrigger();
 };
 
 #endif//InvisibleMine_H

@@ -4,6 +4,7 @@
 #include "particleEffect.h"
 #include "explosionEffect.h"
 #include "pathPlanner.h"
+#include "spaceObjects/missiles/missileWeapon.h"
 
 #include "scriptInterface.h"
 
@@ -19,7 +20,7 @@ REGISTER_MULTIPLAYER_CLASS(Mine, "Mine");
 Mine::Mine()
 : SpaceObject(50, "Mine"), data(MissileWeaponData::getDataFor(MW_Mine))
 {
-    setCollisionRadius(trigger_range);
+    // Keep physics hull small; proximity uses trigger_range in checkProximityTrigger() (same reach as the old oversized hull).
     triggered = false;
     triggerTimeout = triggerDelay;
     ejectTimeout = 0.0;
@@ -86,6 +87,9 @@ void Mine::update(float delta)
         setPositionZ(getPositionZ() + 0.5);
     if (position_z > 0)
         setPositionZ(getPositionZ() - 0.5);
+    // Proximity (including missiles) only after deployment; during tube eject the fuse is not active.
+    if (game_server && !triggered && ejectTimeout <= 0.0f)
+        checkProximityTrigger();
     if (!triggered)
         return;
     triggerTimeout -= delta;
@@ -100,7 +104,9 @@ void Mine::collide(Collisionable* target, float force)
     if (!game_server || triggered || ejectTimeout > 0.0)
         return;
     P<SpaceObject> hitObject = P<Collisionable>(target);
-    if (!hitObject || !hitObject->canBeTargetedBy(nullptr))
+    if (!hitObject)
+        return;
+    if (!hitObject->canBeTargetedBy(nullptr) && !P<MissileWeapon>(hitObject))
         return;
 
     triggered = true;
@@ -137,4 +143,25 @@ void Mine::explode()
 void Mine::onDestruction(ScriptSimpleCallback callback)
 {
     this->on_destruction = callback;
+}
+
+void Mine::checkProximityTrigger()
+{
+    foreach(SpaceObject, target, space_object_list)
+    {
+        if (target == this)
+            continue;
+        P<SpaceObject> hitObject = target;
+        if (!hitObject)
+            continue;
+        // In-flight missiles must arm the fuse when crossing the proximity ring (same as the old large hull),
+        // even when "all can be targeted" is off — physics did not use that flag.
+        if (!hitObject->canBeTargetedBy(nullptr) && !P<MissileWeapon>(hitObject))
+            continue;
+        const float dist = sf::length(target->getPosition() - getPosition());
+        if (dist >= trigger_range + target->getRadius())
+            continue;
+        triggered = true;
+        return;
+    }
 }

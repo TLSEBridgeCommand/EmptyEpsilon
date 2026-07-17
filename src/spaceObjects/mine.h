@@ -37,6 +37,8 @@ public:
 
 private:
     const MissileWeaponData& data;
+
+    void checkProximityTrigger();
 };
 
 #endif//MINE_H
