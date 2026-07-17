@@ -117,6 +117,7 @@ void TractorBeam::update(float delta)
     if (game_server && mode > TBM_Off && range > 0.0 && delta > 0)
     {
         float dragCapability = delta * getDragSpeed();
+        static constexpr float hold_drag_multiplier = 2.0f;
         bool tmpTrackingTarget = false;
         std::set<SpaceShip*> tmpTargets;
         foreach(SpaceObject, target, space_object_list)
@@ -125,10 +126,12 @@ void TractorBeam::update(float delta)
                 // Get the angle to the target.
 
                 sf::Vector2f diff = target->getPosition() - parent->getPosition();
+                const float dist_parent_target = sf::length(diff);
                 float angle_diff = fabsf(sf::angleDifference(direction + parent->getRotation(), sf::vector2ToAngle(diff)));
 
-                // If the target is in the beam's arc and range 
-                if (sf::length(diff) < range && angle_diff < arc / 2.0)
+                // Target must be within range and inside the beam arc (same volume for all modes including Hold).
+                const bool in_tractor_volume = dist_parent_target < range && angle_diff < arc / 2.0f;
+                if (in_tractor_volume)
                 {
                     tmpTrackingTarget = true;
                     sf::Vector2f destination;
@@ -140,7 +143,14 @@ void TractorBeam::update(float delta)
                             destination = parent->getPosition() + normalize(target->getPosition() - parent->getPosition()) * (range * 2);
                             break;
                         case TBM_Hold :
-                            destination = parent->getPosition() + normalize(target->getPosition() - parent->getPosition()) * (range / 2);
+                        {
+                            // Near the far end of the beam along the cone axis, but slightly inward (not flush on the limit).
+                            const sf::Vector2f beam = sf::vector2FromAngle(direction + parent->getRotation());
+                            const float edge_inset = std::max(1.0f, target->getRadius() + 1.0f);
+                            static constexpr float hold_inward_margin = 80.0f;
+                            const float along = std::max(0.f, range - edge_inset - hold_inward_margin);
+                            destination = parent->getPosition() + beam * along;
+                        }
                             break;
                         case TBM_Off :
                         default:
@@ -152,9 +162,19 @@ void TractorBeam::update(float delta)
                     //     shipPtr->addAsTractorBeamTargeter(mode);
                     //     tmpTargets.insert(shipPtr);
                     // }
+                    const float ideal_sep = parent->getRadius() + target->getRadius();
                     diff = target->getPosition() - destination;
-                    float target_distance = std::max(0.0f, sf::length(diff) - parent->getRadius() - target->getRadius());
-                    float distanceToDrag = std::min(target_distance, dragCapability);
+                    const float dlen = sf::length(diff);
+                    float target_distance;
+                    if (mode == TBM_Hold)
+                        target_distance = dlen;
+                    else
+                        target_distance = std::max(0.0f, dlen - ideal_sep);
+
+                    float effective_cap = dragCapability;
+                    if (mode == TBM_Hold)
+                        effective_cap *= hold_drag_multiplier;
+                    float distanceToDrag = std::min(target_distance, effective_cap);
                     if (parent->useEnergy(parent->systems[SYS_Docks].power_user_factor)) //uses cargo docks energy usage // ~~ sweet tractor beam ooh ooh ooh ~~ 
                     {
                         P<PlayerSpaceship> target_ship = target;
@@ -164,7 +184,8 @@ void TractorBeam::update(float delta)
                             target_ship->requestDock(parent);
                         }
                         distanceToDrag *= (100 / target->getRadius());
-                        target->setPosition(target->getPosition() - (distanceToDrag * normalize(diff)));
+                        if (dlen > 0.001f)
+                            target->setPosition(target->getPosition() - (distanceToDrag * normalize(diff)));
                     }
                 }
             }
