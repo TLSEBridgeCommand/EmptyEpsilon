@@ -118,7 +118,8 @@ public:
     string callsign;
     float position_z;
     float hull;
-    
+    bool can_be_destroyed;
+
     string infos_label[10];
     string infos_value[10];
     
@@ -263,6 +264,8 @@ public:
     virtual std::vector<std::pair<string, float> > getHackingTargets();
     virtual void hackFinished(P<SpaceObject> source, string target, float value);
     virtual void takeDamage(float damage_amount, DamageInfo info);
+    void setCanBeDestroyed(bool enabled) { can_be_destroyed = enabled; }
+    bool getCanBeDestroyed() { return can_be_destroyed; }
     virtual std::unordered_map<string, string> getGMInfo() { return std::unordered_map<string, string>(); }
     virtual string getExportLine() { return ""; }
 

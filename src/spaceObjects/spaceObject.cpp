@@ -317,6 +317,14 @@ REGISTER_SCRIPT_CLASS_NO_CREATE(SpaceObject)
     REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, isScannedByFaction);
     // Register a callback that is called when this object is destroyed, by any means.
     REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, onDestroyed);
+    /// Set whether the object can be destroyed by damage to its scanning hull.
+    /// Requires a Boolean value.
+    /// Example: obj:setCanBeDestroyed(true)
+    REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, setCanBeDestroyed);
+    /// Get whether the object can be destroyed.
+    /// Returns a Boolean value.
+    /// Example: local v = obj:getCanBeDestroyed()
+    REGISTER_SCRIPT_CLASS_FUNCTION(SpaceObject, getCanBeDestroyed);
 }
 
 PVector<SpaceObject> space_object_list;
@@ -330,7 +338,8 @@ SpaceObject::SpaceObject(float collision_range, string multiplayer_name, float m
     personality_id = 0;
     position_z = 0;
     hull = 0;
-    
+    can_be_destroyed = true;
+
     for(int n = 0; n < 10; n++)
     {
         infos_label[n] = "";
@@ -345,6 +354,7 @@ SpaceObject::SpaceObject(float collision_range, string multiplayer_name, float m
     registerMemberReplication(&faction_id);
     registerMemberReplication(&personality_id);
     registerMemberReplication(&hull);
+    registerMemberReplication(&can_be_destroyed);
     registerMemberReplication(&scanned_by_faction);
     registerMemberReplication(&object_description.not_scanned);
     registerMemberReplication(&object_description.friend_of_foe_identified);
@@ -404,6 +414,11 @@ void SpaceObject::takeDamage(float damage_amount, DamageInfo info)
     hull -= damage_amount;
     if (hull <= 0)
     {
+        if (!can_be_destroyed)
+        {
+            hull = 1.0f;
+            return;
+        }
         P<ExplosionEffect> e = new ExplosionEffect();
         e->setSize(getRadius());
         e->setPosition(getPosition());

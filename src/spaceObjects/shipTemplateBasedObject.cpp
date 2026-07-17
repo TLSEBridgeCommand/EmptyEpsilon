@@ -20,14 +20,6 @@ REGISTER_SCRIPT_SUBCLASS_NO_CREATE(ShipTemplateBasedObject, SpaceObject)
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplateBasedObject, setHull);
     /// Set the maximum amount of hull for this station. Stations never repair hull damage, so this only effects the percentage displays
     REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplateBasedObject, setHullMax);
-    /// Set whether the object can be destroyed.
-    /// Requires a Boolean value.
-    /// Example: ship:setCanBeDestroyed(true)
-    REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplateBasedObject, setCanBeDestroyed);
-    /// Get whether the object can be destroyed.
-    /// Returns a Boolean value.
-    /// Example: ship:getCanBeDestroyed()
-    REGISTER_SCRIPT_CLASS_FUNCTION(ShipTemplateBasedObject, getCanBeDestroyed);
     /// Get the specified shield's current level.
     /// Requires an integer index value.
     /// Returns a float value.
@@ -120,9 +112,6 @@ ShipTemplateBasedObject::ShipTemplateBasedObject(float collision_range, string m
     registerMemberReplication(&hull_max);
 
     callsign = "[" + string(getMultiplayerId()) + "]";
-
-    can_be_destroyed = true;
-    registerMemberReplication(&can_be_destroyed);
 
 }
 
