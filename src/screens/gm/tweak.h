@@ -4,6 +4,7 @@
 #include "gui/gui2_panel.h"
 #include "missileWeaponData.h"
 #include "shipTemplate.h"
+#include "spaceObjects/shipTemplateBasedObject.h"
 #include "playerInfo.h"
 #include "spaceObjects/playerSpaceship.h"
 #include "spaceObjects/warpJammer.h"
@@ -308,8 +309,19 @@ private:
 
     GuiSlider* heading_slider;
     GuiSlider* position_z_slider;
-    GuiSlider* hull_slider;
     GuiLabel* hull_label;
+    GuiSlider* hull_slider;
+    GuiLabel* hull_max_label;
+    GuiSlider* hull_max_slider;
+    GuiLabel* hull_current_label;
+    GuiSlider* hull_strength_slider;
+    GuiToggleButton* can_be_destroyed_toggle;
+    GuiSelector* scan_faction_selector;
+    GuiSlider* scan_state_slider;
+    GuiLabel* scan_state_label;
+    GuiButton* scan_all_full_button;
+    GuiButton* scan_all_clear_button;
+    int scan_faction_id;
     GuiSlider* scanning_complexity_slider;
     GuiSlider* scanning_depth_slider;
     GuiSlider* gravity_slider;

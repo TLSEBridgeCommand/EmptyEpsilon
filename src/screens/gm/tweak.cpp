@@ -17,6 +17,8 @@
 #include "gui/gui2_progressbar.h"
 #include "gui/gui2_advancedscrolltext.h"
 #include "scienceDatabase.h"
+#include "factionInfo.h"
+#include "spaceObjects/spaceObject.h"
 
 GuiObjectTweak::GuiObjectTweak(GuiContainer* owner, ETweakType tweak_type)
 : GuiPanel(owner, "GM_TWEAK_DIALOG")
@@ -26,6 +28,8 @@ GuiObjectTweak::GuiObjectTweak(GuiContainer* owner, ETweakType tweak_type)
 
     GuiListbox* list = new GuiListbox(this, "", [this](int index, string value)
     {
+        if (index < 0 || index >= int(pages.size()))
+            return;
         for(GuiTweakPage* page : pages)
             page->hide();
         pages[index]->show();
@@ -1655,7 +1659,7 @@ void GuiShipTweakRelayLogs::onDraw(sf::RenderTarget& window)
 }
 
 GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
-: GuiTweakPage(owner)
+: GuiTweakPage(owner), scan_faction_id(1)
 {
     GuiAutoLayout* left_col = new GuiAutoLayout(this, "LEFT_LAYOUT", GuiAutoLayout::LayoutVerticalTopToBottom);
     left_col->setPosition(50, 25, ATopLeft)->setSize(300, GuiElement::GuiSizeMax);
@@ -1685,15 +1689,88 @@ GuiObjectTweakBase::GuiObjectTweakBase(GuiContainer* owner)
     position_z_slider->addSnapValue(0.0, 0.01);
     position_z_slider->addSnapValue(100.0, 0.01);
     position_z_slider->addSnapValue(200.0, 0.01);
+
+    (new GuiLabel(left_col, "", tr("Scan state (faction):"), 30))->setSize(GuiElement::GuiSizeMax, 50);
+    scan_faction_selector = new GuiSelector(left_col, "", [this](int index, string value) {
+        (void)index;
+        scan_faction_id = value.toInt();
+        if (target)
+        {
+            scan_state_slider->setValue(target->getScannedStateForFaction(scan_faction_id));
+            scan_state_label->setText(getScannedStateName(target->getScannedStateForFaction(scan_faction_id)));
+        }
+    });
+    scan_faction_selector->setSize(GuiElement::GuiSizeMax, 50);
+    for (unsigned int n = 0; n < factionInfo.size(); n++)
+        scan_faction_selector->addEntry(factionInfo[n]->getName(), string(n));
+    {
+        const int default_faction_idx = factionInfo.size() > 1 ? 1 : 0;
+        scan_faction_id = default_faction_idx;
+        scan_faction_selector->setSelectionIndex(default_faction_idx);
+    }
+
+    (new GuiLabel(left_col, "", tr("Scan level:"), 30))->setSize(GuiElement::GuiSizeMax, 50);
+    scan_state_slider = new GuiSlider(left_col, "", 0, 3, 0, [this](float value) {
+        if (!target)
+            return;
+        EScannedState state = EScannedState(int(round(value)));
+        target->setScannedStateForFaction(scan_faction_id, state);
+    });
+    scan_state_slider->setSize(GuiElement::GuiSizeMax, 50);
+    scan_state_slider->addSnapValue(0.0f, 1.0f);
+    scan_state_slider->addSnapValue(1.0f, 1.0f);
+    scan_state_slider->addSnapValue(2.0f, 1.0f);
+    scan_state_slider->addSnapValue(3.0f, 1.0f);
+    scan_state_label = new GuiLabel(scan_state_slider, "", "", 30);
+    scan_state_label->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+
+    scan_all_full_button = new GuiButton(left_col, "", tr("Full scan (all factions)"), [this]() {
+        if (target)
+            target->setScanned(true);
+    });
+    scan_all_full_button->setSize(GuiElement::GuiSizeMax, 50);
+
+    scan_all_clear_button = new GuiButton(left_col, "", tr("Clear scan (all factions)"), [this]() {
+        if (target)
+            target->setScanned(false);
+    });
+    scan_all_clear_button->setSize(GuiElement::GuiSizeMax, 50);
     
-    hull_label = new GuiLabel(left_col, "", "Hull:", 30);
+    hull_label = new GuiLabel(left_col, "", tr("Hull:"), 30);
     hull_label->setSize(GuiElement::GuiSizeMax, 50);
     hull_slider = new GuiSlider(left_col, "", 0.0, 500, 0.0, [this](float value) {
-        if (target != nullptr) 
-        target->hull = value;
+        if (target != nullptr)
+            target->hull = value;
     });
     hull_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
-    
+
+    hull_max_label = new GuiLabel(left_col, "", tr("Hull max:"), 30);
+    hull_max_label->setSize(GuiElement::GuiSizeMax, 50);
+    hull_max_slider = new GuiSlider(left_col, "", 0.0, 500, 0.0, [this](float value) {
+        P<ShipTemplateBasedObject> stbo = target;
+        if (stbo)
+        {
+            stbo->hull_max = round(value);
+            stbo->hull_strength = std::min(stbo->hull_strength, stbo->hull_max);
+        }
+    });
+    hull_max_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
+
+    hull_current_label = new GuiLabel(left_col, "", tr("Hull current:"), 30);
+    hull_current_label->setSize(GuiElement::GuiSizeMax, 50);
+    hull_strength_slider = new GuiSlider(left_col, "", 0.0, 500, 0.0, [this](float value) {
+        P<ShipTemplateBasedObject> stbo = target;
+        if (stbo)
+            stbo->hull_strength = std::min(roundf(value), stbo->hull_max);
+    });
+    hull_strength_slider->addOverlay()->setSize(GuiElement::GuiSizeMax, 40);
+
+    can_be_destroyed_toggle = new GuiToggleButton(left_col, "", tr("Could be destroyed"), [this](bool value) {
+        if (target != nullptr)
+            target->setCanBeDestroyed(value);
+    });
+    can_be_destroyed_toggle->setSize(GuiElement::GuiSizeMax, 40);
+
     // Right column
     // Radar signature
 	(new GuiLabel(right_col, "", tr("Gravity signature (blue):"), 30))->setSize(GuiElement::GuiSizeMax, 50);
@@ -1740,10 +1817,31 @@ void GuiObjectTweakBase::onDraw(sf::RenderTarget& window)
     {
         heading_slider->setValue(target->getHeading());
         position_z_slider->setValue(target->getPositionZ());
-        hull_slider->setValue(target->hull);
-        P<ShipTemplateBasedObject> ship = target;
-        hull_label->setVisible(!ship);
-        hull_slider->setVisible(!ship);
+        P<ShipTemplateBasedObject> stbo = target;
+        P<SpaceShip> spaceship = target;
+
+        const bool show_scanning_hull = !stbo;
+        const bool show_template_hull = stbo && !spaceship;
+        const bool show_destroy_toggle = !spaceship;
+
+        hull_label->setVisible(show_scanning_hull);
+        hull_slider->setVisible(show_scanning_hull);
+        if (show_scanning_hull)
+            hull_slider->setValue(target->hull);
+
+        hull_max_label->setVisible(show_template_hull);
+        hull_max_slider->setVisible(show_template_hull);
+        hull_current_label->setVisible(show_template_hull);
+        hull_strength_slider->setVisible(show_template_hull);
+        if (show_template_hull)
+        {
+            hull_strength_slider->setValue(stbo->hull_strength);
+            hull_max_slider->setValue(stbo->hull_max);
+        }
+
+        can_be_destroyed_toggle->setVisible(show_destroy_toggle);
+        if (show_destroy_toggle)
+            can_be_destroyed_toggle->setValue(target->getCanBeDestroyed());
 
         // we probably dont need to set these each onDraw
         // but doing it forces the slider to round to a integer
@@ -1752,12 +1850,29 @@ void GuiObjectTweakBase::onDraw(sf::RenderTarget& window)
         gravity_slider->setValue(target->radar_signature.gravity * 100.0f);
         electrical_slider->setValue(target->getRadarSignatureElectrical() * 100.0f);
         biological_slider->setValue(target->getRadarSignatureBiological() * 100.0f);
+
+        scan_state_slider->setValue(target->getScannedStateForFaction(scan_faction_id));
+        scan_state_label->setText(getScannedStateName(target->getScannedStateForFaction(scan_faction_id)));
     }
 }
 
 void GuiObjectTweakBase::open(P<SpaceObject> target)
 {
     this->target = target;
+    const int default_faction_idx = factionInfo.size() > 1 ? 1 : 0;
+    scan_faction_id = default_faction_idx;
+    scan_faction_selector->setSelectionIndex(default_faction_idx);
+    if (target && scan_faction_id < int(factionInfo.size()))
+    {
+        scan_state_slider->setValue(target->getScannedStateForFaction(scan_faction_id));
+        scan_state_label->setText(getScannedStateName(target->getScannedStateForFaction(scan_faction_id)));
+    }
+    P<ShipTemplateBasedObject> stbo = target;
+    P<SpaceShip> spaceship = target;
+    if (stbo && !spaceship && stbo->ship_template)
+        hull_max_slider->clearSnapValues()->addSnapValue(stbo->ship_template->hull, 5.0f);
+    else
+        hull_max_slider->clearSnapValues();
 }
 
 GuiShipTweakDescription::GuiShipTweakDescription(GuiContainer* owner)
