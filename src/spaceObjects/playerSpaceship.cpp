@@ -1776,7 +1776,7 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
             packet >> system >> preset >> request;
             if (system < SYS_COUNT && request >= 0.0 && request <= 3.0 && preset > 0 && preset <= max_engineer_presets_number)
             {
-                power_presets[system][preset] = request;
+                power_presets[system][preset - 1] = request;
                 if (system == 0)
                     addToShipLog(tr("preset","Preset {id_preset} updated").format({{"id_preset", string(preset)}}), colorConfig.log_receive_neutral, engineering);
             }
