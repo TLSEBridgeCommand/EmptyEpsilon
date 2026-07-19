@@ -58,7 +58,7 @@ public:
     // Base time it takes to perform an action
     constexpr static float shield_calibration_time = 25.0f;
     constexpr static float comms_channel_open_time = 2.0;
-    constexpr static float scan_probe_charge_time = 10.0f;
+    constexpr static float scan_probe_charge_time = 60.0f;
     constexpr static float max_scanning_delay = 6.0;
     // Maximum number of self-destruction confirmation codes
     constexpr static int max_self_destruct_codes = 3;
