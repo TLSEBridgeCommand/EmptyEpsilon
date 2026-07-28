@@ -387,7 +387,7 @@ PlayerSpaceship::PlayerSpaceship()
     scan_probe_stock = max_scan_probes;
     alert_level = AL_Normal;
     shields_active = false;
-    lock_fire = true;
+    lock_fire = false;
     control_code = "";
     disable_reactor_overheat_ship_destruction = PreferencesManager::get("disable_reactor_overheat_ship_destruction", "0").toInt();
     scanning_noise = 0.0;

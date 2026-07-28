@@ -7,7 +7,7 @@
 FireLockButton::FireLockButton(GuiContainer* owner, string id, P<PlayerSpaceship> targetSpaceship)
 : GuiToggleButton(owner, id, tr("missile","Beams"), [this](bool value){setFireLock(value);}), target_spaceship(targetSpaceship)
 {
-    setValue(true);
+    setValue(false);
     setIcon("gui/icons/lock");
 }
 
