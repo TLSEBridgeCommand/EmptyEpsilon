@@ -263,7 +263,8 @@ bool SinglePilotView::onJoystickAxis(const AxisAction& axisAction)
         {
             if (axisAction.action == "IMPULSE")
             {
-                target_spaceship->commandImpulse(axisAction.value);
+                if (target_spaceship->current_warp <= 0.0f)
+                    target_spaceship->commandImpulse(axisAction.value);
                 return true;
             }
             if (axisAction.action == "ROTATE")

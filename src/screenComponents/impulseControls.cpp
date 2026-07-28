@@ -10,8 +10,12 @@ GuiImpulseControls::GuiImpulseControls(GuiContainer* owner, string id, P<PlayerS
 : GuiElement(owner, id), target_spaceship(targetSpaceship)
 {
     slider = new GuiSlider(this, id + "_SLIDER", 1.0, -1.0, 0.0, [this](float value) {
-        if (target_spaceship)
-            target_spaceship->commandImpulse(value);
+        if (!target_spaceship)
+            return;
+        if (target_spaceship->current_warp > 0.0f || target_spaceship->warp_request > 0
+            || (target_spaceship->has_jump_drive && target_spaceship->jump_delay > 0.0f))
+            return;
+        target_spaceship->commandImpulse(value);
     });
     slider->addSnapValue(0.0, 0.1)->setPosition(0, 0, ATopLeft)->setSize(50, GuiElement::GuiSizeMax);
 
@@ -32,13 +36,25 @@ void GuiImpulseControls::onDraw(sf::RenderTarget& window)
     if (target_spaceship)
     {
         label->setValue(string(int(target_spaceship->current_impulse * 100)) + "%");
-        slider->setValue(target_spaceship->impulse_request);
+        // While warping/jumping, show actual impulse (coasting to 0) and lock the slider.
+        // impulse_request is preserved and resumes when warp/jump ends.
+        bool impulse_locked = target_spaceship->current_warp > 0.0f
+            || target_spaceship->warp_request > 0
+            || (target_spaceship->has_jump_drive && target_spaceship->jump_delay > 0.0f);
+        slider->setValue(impulse_locked ? target_spaceship->current_impulse : target_spaceship->impulse_request);
+        slider->setEnable(!impulse_locked);
+        label->setEnable(!impulse_locked);
+    }else{
+        slider->setEnable(true);
+        label->setEnable(true);
     }
 }
 
 void GuiImpulseControls::onHotkey(const HotkeyResult& key)
 {
-    if (key.category == "HELMS" && target_spaceship)
+    if (key.category == "HELMS" && target_spaceship
+        && target_spaceship->current_warp <= 0.0f && target_spaceship->warp_request <= 0
+        && !(target_spaceship->has_jump_drive && target_spaceship->jump_delay > 0.0f))
     {
         if (key.hotkey == "INC_IMPULSE")
             target_spaceship->commandImpulse(std::min(1.0f, slider->getValue() + 0.1f));

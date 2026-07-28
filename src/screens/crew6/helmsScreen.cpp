@@ -129,7 +129,8 @@ bool HelmsScreen::onJoystickAxis(const AxisAction& axisAction){
         {
             if (axisAction.action == "IMPULSE")
             {
-                my_spaceship->commandImpulse(axisAction.value);
+                if (my_spaceship->current_warp <= 0.0f)
+                    my_spaceship->commandImpulse(axisAction.value);
                 return true;
             }
             if (axisAction.action == "ROTATE")

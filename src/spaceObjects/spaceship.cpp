@@ -837,6 +837,7 @@ void SpaceShip::update(float delta)
     }
     if (has_jump_drive && jump_delay > 0)
     {
+        // Keep impulse_request so helms resumes the previous setting after the jump.
         if (current_impulse > 0.0)
         {
             if (impulse_max_speed > 0)
@@ -865,6 +866,8 @@ void SpaceShip::update(float delta)
         }
     }else if (has_warp_drive && (warp_request > 0 || current_warp > 0))
     {
+        // Keep impulse_request so helms resumes the previous setting after dropping out of warp.
+        // current_impulse still coasts to zero while warping.
         if (current_impulse > 0.0)
         {
             if (impulse_max_speed > 0)
