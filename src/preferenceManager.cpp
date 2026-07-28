@@ -9,9 +9,10 @@ void PreferencesManager::set(string key, string value)
 
 string PreferencesManager::get(string key, string default_value)
 {
-    if (preference.find(key) == preference.end())
-        preference[key] = default_value;
-    return preference[key];
+    auto it = preference.find(key);
+    if (it == preference.end())
+        return default_value;
+    return it->second;
 }
 
 void PreferencesManager::load(string filename)
