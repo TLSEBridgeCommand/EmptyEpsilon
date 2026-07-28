@@ -100,6 +100,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
                 if (my_spaceship)
                     my_spaceship->commandLaunchProbe(position);
                 mode = TargetSelection;
+                placement_buttons->hide();
                 option_buttons->show();
                 break;
             }
@@ -192,6 +193,7 @@ RelayScreen::RelayScreen(GuiContainer* owner, bool allow_comms, bool allow_alert
     launch_probe_button = new GuiButton(option_buttons, "LAUNCH_PROBE_BUTTON", tr("Launch Probe"), [this]() {
         mode = LaunchProbe;
         option_buttons->hide();
+        placement_buttons->show();
     });
     launch_probe_button->setSize(GuiElement::GuiSizeMax, 50)->setVisible(my_spaceship && my_spaceship->getCanLaunchProbe());
 
@@ -494,6 +496,7 @@ void RelayScreen::onHotkey(const HotkeyResult& key)
         {
             mode = LaunchProbe;
             option_buttons->hide();
+            placement_buttons->show();
         }
         if (key.hotkey == "INC_ZOOM")
         {
