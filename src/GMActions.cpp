@@ -214,7 +214,9 @@ void GameMasterActions::onReceiveClientCommand(int32_t client_id, sf::Packet& pa
         {
             int faction_a, faction_b, stateIdx;
             packet >> faction_a >> faction_b >> stateIdx;
+            // Keep relations mutual, matching FactionInfo::setEnemy / setFriendly.
             factionInfo[faction_a]->states[faction_b] = (EFactionVsFactionState) stateIdx;
+            factionInfo[faction_b]->states[faction_a] = (EFactionVsFactionState) stateIdx;
         }
         break;
     }
