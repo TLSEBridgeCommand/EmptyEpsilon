@@ -48,7 +48,7 @@ void DamageControlScreen::onDraw(sf::RenderTarget& window)
         for(unsigned int n=0; n<SYS_COUNT; n++)
         {
             system_health[n]->setVisible(my_spaceship->hasSystem(ESystem(n)));
-            system_health[n]->setValue(string(int(my_spaceship->systems[n].health * 100)) + "%");
+            system_health[n]->setValue(string(systemHealthToPercent(my_spaceship->systems[n].health)) + "%");
             if (my_spaceship->systems[n].health < 0)
                 system_health[n]->setColor(sf::Color::Red);
             else if (my_spaceship->systems[n].health_max < 1.0)

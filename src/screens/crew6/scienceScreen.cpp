@@ -485,7 +485,7 @@ void ScienceScreen::onDraw(sf::RenderTarget& window)
                         {
                             info_system[n]->show();
                             float system_health = ship->systems[n].health;
-                            info_system[n]->setValue(string(int(system_health * 100.0f)) + "%")->setColor(sf::Color(255, 127.5 * (system_health + 1), 127.5 * (system_health + 1), 255));
+                            info_system[n]->setValue(string(systemHealthToPercent(system_health)) + "%")->setColor(sf::Color(255, 127.5 * (system_health + 1), 127.5 * (system_health + 1), 255));
                         }
                     }
                 }

@@ -783,12 +783,19 @@ void PlayerSpaceship::update(float delta)
                 updateInstability(ESystem(n));
 
             // Repair if nano repair crew
-            if (gameGlobalInfo->use_nano_repair_crew)
+            if (gameGlobalInfo->use_nano_repair_crew && delta > 0.0f && systems[n].repair_level > 0.0f)
             {
-                systems[n].health += system_repair_effect_per_second * systems[n].repair_level * delta;
-                if (systems[n].health > 1.0)
-                    systems[n].health = 1.0;
-                systems[n].hacked_level -= system_repair_effect_per_second * systems[n].repair_level * delta;;
+                const float max_h = systems[n].health_max;
+                if (systems[n].health < max_h)
+                {
+                    systems[n].health += system_repair_effect_per_second * systems[n].repair_level * delta;
+                    if (systems[n].health > max_h)
+                        systems[n].health = max_h;
+                }
+                // Snap float noise so a "full" system stays exactly at health_max (avoids 99% display).
+                if (systems[n].health > max_h - 1e-4f)
+                    systems[n].health = max_h;
+                systems[n].hacked_level -= system_repair_effect_per_second * systems[n].repair_level * delta;
                 if (systems[n].hacked_level < 0.0)
                     systems[n].hacked_level = 0.0;
             }
@@ -1570,7 +1577,14 @@ void PlayerSpaceship::onReceiveClientCommand(int32_t client_id, sf::Packet& pack
         packet >> turnSpeed;
         break;
     case CMD_IMPULSE:
-        packet >> impulse_request;
+        {
+            float target;
+            packet >> target;
+            // Ignore impulse changes while warping/jumping so the pre-warp request is preserved.
+            if (current_warp <= 0.0f && warp_request <= 0
+                && !(has_jump_drive && jump_delay > 0.0f))
+                impulse_request = target;
+        }
         break;
     case CMD_WARP:
         packet >> warp_request;

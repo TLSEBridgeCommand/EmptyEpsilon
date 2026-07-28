@@ -2,6 +2,7 @@
 #ifndef SPACESHIP_H
 #define SPACESHIP_H
 
+#include <cmath>
 #include "shipTemplateBasedObject.h"
 #include "shipTemplate.h"
 #include "spaceStation.h"
@@ -596,6 +597,14 @@ float frequencyVsFrequencyDamageFactor(int beam_frequency, int shield_frequency)
 
 string getMissileWeaponName(EMissileWeapons missile);
 string getLocaleMissileWeaponName(EMissileWeapons missile);
+
+/** Convert system health (-1..1) to a display percent. Uses rounding so values
+ *  like 0.999 due to float repair noise show as 100% instead of truncating to 99%. */
+inline int systemHealthToPercent(float health)
+{
+    return int(std::lround(double(health) * 100.0));
+}
+
 REGISTER_MULTIPLAYER_ENUM(EMissileWeapons);
 REGISTER_MULTIPLAYER_ENUM(EWeaponTubeState);
 REGISTER_MULTIPLAYER_ENUM(EMainScreenSetting);

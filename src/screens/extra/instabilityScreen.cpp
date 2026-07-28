@@ -165,7 +165,7 @@ void InstabilityControlScreen::onDraw(sf::RenderTarget& window)
                 damage_bar->setValue(-health)->setColor(sf::Color(128, 32, 32, 192));
             else
                 damage_bar->setValue(health)->setColor(sf::Color(64, 128 * health, 64 * health, 192));
-            damage_label->setText(string(int(health * 100)) + "%");
+            damage_label->setText(string(systemHealthToPercent(health)) + "%");
 
             float heat = system.heat_level;
             heat_bar->setValue(heat)->setColor(sf::Color(128, 32 + 96 * (1.0 - heat), 32, 192));

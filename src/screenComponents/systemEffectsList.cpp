@@ -32,7 +32,7 @@ void GuiSystemEffectsList::onDraw(sf::RenderTarget& window)
         
         if (primary_info_visible)
         {
-            addSystemEffect(tr("Health"), string(int(health * 100)) + "%");
+            addSystemEffect(tr("Health"), string(systemHealthToPercent(health)) + "%");
             addSystemEffect(tr("Power"), string(int(power * 100)) + "%");
             addSystemEffect(tr("Heat"), string(int(heat * 100)) + "%");
             addSystemEffect(tr("Coolant"), string(coolant,1));
@@ -45,7 +45,7 @@ void GuiSystemEffectsList::onDraw(sf::RenderTarget& window)
         addSystemEnergy(selected_system);
 
         if (health_max < 1.0)
-            addSystemEffect(tr("Maximal health"), string(int(health_max * 100)) + "%");
+            addSystemEffect(tr("Maximal health"), string(systemHealthToPercent(health_max)) + "%");
         switch(selected_system)
         {
         case SYS_Reactor:

@@ -428,7 +428,7 @@ void EngineeringScreen::onDraw(sf::RenderTarget& window)
                 info.damage_bar->setValue(-health)->setColor(sf::Color(128, 32, 32, 192));
             else
                 info.damage_bar->setValue(health)->setColor(sf::Color(64, 128 * health, 64 * health, 192));
-            info.damage_label->setText(string(int(health * 100)) + "%");
+            info.damage_label->setText(string(systemHealthToPercent(health)) + "%");
             info.heat_label->setText(string(int(my_spaceship->systems[n].heat_level * 100)) + "%");
             info.heat_label->setVisible(my_spaceship->systems[n].heat_level > 0.0);
             info.power_label->setText(string(int(my_spaceship->systems[n].power_level * 100)) + "%");
