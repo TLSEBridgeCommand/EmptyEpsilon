@@ -667,20 +667,6 @@ void SpaceShip::drawOnRadar(sf::RenderTarget& window, sf::Vector2f position, flo
             drawBeamOnRadar(window, position, scale, rotation, color, beam_position, beam_direction, beam_arc, beam_range);
         }
     }
-    // If not on long-range radar ...
-    if (!long_range)
-    {
-        // ... and the ship being drawn is either not our ship or has been
-        // scanned ...
-        if (!my_spaceship || getScannedStateFor(my_spaceship) >= SS_SimpleScan)
-        {
-            // ... draw and show shield indicators on our radar.
-            drawShieldsOnRadar(window, position, scale, rotation, 1.0, true);
-        } else {
-            // Otherwise, draw the indicators, but don't show them.
-            drawShieldsOnRadar(window, position, scale, rotation, 1.0, false);
-        }
-    }
 
     // Set up the radar sprite for objects.
     sf::Sprite objectSprite;
@@ -696,12 +682,19 @@ void SpaceShip::drawOnRadar(sf::RenderTarget& window, sf::Vector2f position, flo
         textureManager.setTexture(objectSprite, radar_trace);
     }
 
+    if (!long_range)
+    {
+        // ... and the ship being drawn is either not our ship or has been scanned ...
+        if (!my_spaceship || getScannedStateFor(my_spaceship) >= SS_SimpleScan)
+            drawShieldsOnRadar(window, position, scale, rotation, 1.0, true);
+        else
+            drawShieldsOnRadar(window, position, scale, rotation, 1.0, false);
+    }
+
     objectSprite.setRotation(getRotation()-rotation);
     objectSprite.setPosition(position);
     if (long_range)
-    {
         objectSprite.setScale(0.7, 0.7);
-    }
     if (my_spaceship == this)
     {
         if (!gameGlobalInfo->color_by_faction)
