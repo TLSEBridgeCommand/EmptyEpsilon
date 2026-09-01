@@ -42,6 +42,9 @@ CrashLogger::CrashLogger()
     lastSoftCrashReason = "";
     softCrashDetected = false;
     lastSoftCrashTime = std::chrono::steady_clock::now();
+#ifdef _WIN32
+    symbolsInitialized = false;
+#endif
     
     // Create logs directory if it doesn't exist
 #ifdef _WIN32
@@ -57,6 +60,10 @@ CrashLogger::CrashLogger()
     
     // Clean up old logs on startup
     cleanupOldLogs();
+
+#ifdef _WIN32
+    initializeSymbols();
+#endif
     
     // Set up crash handlers
     setupCrashHandlers();
@@ -70,6 +77,9 @@ CrashLogger::~CrashLogger()
     if (!recentEvents.empty()) {
         writeToLog("Application shutdown - saving pending events");
     }
+#ifdef _WIN32
+    shutdownSymbols();
+#endif
 }
 
 CrashLogger* CrashLogger::getInstance()
@@ -161,6 +171,27 @@ void CrashLogger::logLuaError(const std::string& error, const std::string& stack
         message += "\nStack Trace:\n" + stackTrace;
     }
     writeToLog(message);
+
+    try {
+        std::ofstream crashFile(crashLogPath, std::ios::app);
+        if (crashFile.is_open()) {
+            crashFile << "=== LUA ERROR ===" << std::endl;
+            crashFile << "Timestamp: " << getCurrentTimestamp() << std::endl;
+            crashFile << message << std::endl;
+            crashFile << "=== END LUA ERROR ===" << std::endl << std::endl;
+            crashFile.close();
+        }
+    } catch (...) {
+    }
+
+    NetworkEvent event;
+    event.timestamp = std::chrono::system_clock::now();
+    event.type = "lua_error";
+    event.details = error;
+    recentEvents.push_back(event);
+    if (recentEvents.size() > 100) {
+        recentEvents.erase(recentEvents.begin());
+    }
     
     // Log as game event for soft crash detection
     logGameEvent("Lua Error", error);
@@ -294,6 +325,52 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
     CrashLogger* logger = CrashLogger::getInstance();
     logger->saveCrashContext(crashReason, exceptionContext);
     return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
+
+#ifdef _WIN32
+void CrashLogger::initializeSymbols()
+{
+    if (symbolsInitialized)
+        return;
+
+    HANDLE process = GetCurrentProcess();
+    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_INCLUDE_32BIT_MODULES);
+
+    if (!SymInitialize(process, NULL, TRUE))
+        return;
+
+    char exePath[MAX_PATH];
+    if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0)
+    {
+        std::string searchPath(exePath);
+        const size_t slash = searchPath.find_last_of("\\/");
+        if (slash != std::string::npos)
+            searchPath.resize(slash);
+        SymSetSearchPath(process, searchPath.c_str());
+
+        HMODULE exeModule = GetModuleHandleA(NULL);
+        SymLoadModuleEx(
+            process,
+            NULL,
+            exePath,
+            NULL,
+            (DWORD64)exeModule,
+            0,
+            NULL,
+            0);
+    }
+
+    symbolsInitialized = true;
+}
+
+void CrashLogger::shutdownSymbols()
+{
+    if (!symbolsInitialized)
+        return;
+
+    SymCleanup(GetCurrentProcess());
+    symbolsInitialized = false;
 }
 #endif
 
@@ -650,13 +727,15 @@ std::string CrashLogger::generateStackTrace(void* exceptionContext)
     std::stringstream ss;
     
 #ifdef _WIN32
+    if (!symbolsInitialized)
+        initializeSymbols();
+
     HANDLE process = GetCurrentProcess();
-    if (!SymInitialize(process, NULL, TRUE))
+    if (!symbolsInitialized)
     {
-        ss << "  (SymInitialize failed; stack addresses unavailable)\n";
+        ss << "  (Symbol resolver unavailable; ensure dbghelp.dll and mgwhelp.dll are next to EmptyEpsilon.exe)\n";
         return ss.str();
     }
-    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
 
     void* stack[62];
     USHORT frames = 0;
@@ -734,7 +813,7 @@ std::string CrashLogger::generateStackTrace(void* exceptionContext)
                     base = base ? base + 1 : modulePath;
                     DWORD64 rva = address - moduleBase;
                     ss << "  [" << i << "] " << base << "+0x" << std::hex << rva << std::dec
-                       << " (no symbol; place PDB next to exe/DLL for names) [0x" << std::hex << address << std::dec << "]"
+                       << " (no symbol; use a RelWithDebInfo build and keep mgwhelp.dll next to the exe) [0x" << std::hex << address << std::dec << "]"
                        << std::endl;
                 }
                 else
@@ -746,11 +825,10 @@ std::string CrashLogger::generateStackTrace(void* exceptionContext)
     }
 
     free(symbol);
-    SymCleanup(process);
 
     ss << "\n"
-          "Stack hint (Windows): If you only see module+offset, copy EmptyEpsilon.pdb (and SFML/other PDBs if "
-          "custom-built) next to the binaries so DbgHelp can resolve functions and lines.\n";
+          "Stack hint (Windows): Function names and line numbers require a build with debug symbols "
+          "(RelWithDebInfo) and drmingw DLLs (dbghelp.dll, mgwhelp.dll) beside EmptyEpsilon.exe.\n";
     
 #elif defined(__linux__) || defined(__APPLE__)
     void* array[62];

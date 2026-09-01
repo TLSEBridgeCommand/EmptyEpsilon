@@ -32,6 +32,7 @@
 
 #include "hardware/hardwareController.h"
 #include "crashLogger.h"
+#include "scriptErrorLogging.h"
 #include "networkHealthMonitor.h"
 // #ifdef __WIN32__
 // #include "discord.h"
@@ -175,6 +176,7 @@ int main(int argc, char** argv)
 
     // Initialize crash logging system
     CrashLogger::getInstance();
+    registerScriptErrorLogging();
     NetworkHealthMonitor::getInstance();
 #ifdef CONFIG_DIR
     PreferencesManager::load(CONFIG_DIR "options.ini");

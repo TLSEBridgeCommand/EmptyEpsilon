@@ -99,7 +99,13 @@ private:
     
     // Stack trace generation
     std::string generateStackTrace(void* exceptionContext = nullptr);
-    
+
+#ifdef _WIN32
+    void initializeSymbols();
+    void shutdownSymbols();
+    bool symbolsInitialized;
+#endif
+
     std::string lastSoftCrashReason;
     bool softCrashDetected;
     std::chrono::steady_clock::time_point lastSoftCrashTime;

@@ -120,6 +120,7 @@ set(EXECUTABLE_NAME "EmptyEpsilon")
 set(SOURCES
 	src/main.cpp
 	src/scriptLogging.cpp
+	src/scriptErrorLogging.cpp
 	src/cargo.cpp
 	src/shipCargo.cpp
 	src/threatLevelEstimate.cpp
@@ -467,7 +468,16 @@ endif()
 target_include_directories(${EXECUTABLE_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(${EXECUTABLE_NAME} PUBLIC ${SERIOUS_PROTON_DIR}/src)
 target_compile_options(${EXECUTABLE_NAME} PUBLIC $<$<CONFIG:Release>:${OPTIMIZER_FLAGS}>)
-target_compile_options(${EXECUTABLE_NAME} PUBLIC $<$<CONFIG:RelWithDebInfo>:-g1 ${OPTIMIZER_FLAGS}>)
+if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Full debug info + reliable stack walks for drmingw/mgwhelp crash logs.
+    set(RELWITHDEBINFO_OPTIMIZER_FLAGS ${OPTIMIZER_FLAGS})
+    string(REPLACE "-flto " "" RELWITHDEBINFO_OPTIMIZER_FLAGS "${RELWITHDEBINFO_OPTIMIZER_FLAGS}")
+    string(REPLACE "-flto" "" RELWITHDEBINFO_OPTIMIZER_FLAGS "${RELWITHDEBINFO_OPTIMIZER_FLAGS}")
+    target_compile_options(${EXECUTABLE_NAME} PUBLIC $<$<CONFIG:RelWithDebInfo>:-g -fno-omit-frame-pointer ${RELWITHDEBINFO_OPTIMIZER_FLAGS}>)
+    string(REPLACE "-flto" "" CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}")
+else()
+    target_compile_options(${EXECUTABLE_NAME} PUBLIC $<$<CONFIG:RelWithDebInfo>:-g1 ${OPTIMIZER_FLAGS}>)
+endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 

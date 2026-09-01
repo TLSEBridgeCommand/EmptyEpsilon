@@ -1,6 +1,7 @@
 #include <i18n.h>
 #include "gameGlobalInfo.h"
 #include "script.h"
+#include "scriptInterface.h"
 
 /// Object which can be used to create and run another script.
 /// Other scripts have their own lifetime, update and init functions.
@@ -33,8 +34,10 @@ static int require(lua_State* L)
     P<ResourceStream> stream = getResourceStream(filename);
     if (!stream)
     {
-        LOG(ERROR) << "Require: Script not found: " << filename;
-        lua_pushstring(L, ("Require: Script not found: " + filename).c_str());
+        string error_string = "Script not found: " + filename;
+        LOG(ERROR) << "Require: " << error_string;
+        ScriptObject::reportLuaError(L, "require", error_string);
+        lua_pushstring(L, ("Require: " + error_string).c_str());
         return lua_error(L);
     }
 
@@ -48,7 +51,7 @@ static int require(lua_State* L)
     if (luaL_loadbuffer(L, filecontents.c_str(), filecontents.length(), filename.c_str()))
     {
         string error_string = luaL_checkstring(L, -1);
-        LOG(ERROR) << "LUA: require: " << error_string;
+        ScriptObject::reportLuaError(L, "require", error_string);
         lua_pushstring(L, ("require:" + error_string).c_str());
         return lua_error(L);
     }
@@ -57,7 +60,7 @@ static int require(lua_State* L)
     if (lua_pcall(L, 0, LUA_MULTRET, 0))
     {
         string error_string = luaL_checkstring(L, -1);
-        LOG(ERROR) << "LUA: require: " << error_string;
+        ScriptObject::reportLuaError(L, "require", error_string);
         lua_pushstring(L, ("require:" + error_string).c_str());
         return lua_error(L);
     }
