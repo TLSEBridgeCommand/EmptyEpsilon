@@ -8,6 +8,10 @@
 
 #include "particleEffect.h"
 
+#include <SFML/Graphics/Shader.hpp>
+
+#include <algorithm>
+
 #if FEATURE_3D_RENDERING
 static void _glPerspective(double fovY, double aspect, double zNear, double zFar )
 {
@@ -18,6 +22,49 @@ static void _glPerspective(double fovY, double aspect, double zNear, double zFar
     fW = fH * aspect;
 
     glFrustum(-fW, fW, -fH, fH, zNear, zFar);
+}
+
+/** World position for normalized (u,v) on a sky-cube face; matches star cubemap layout in this file. */
+static void skyboxLayerFaceCorner(int face, float u, float v, float& x, float& y, float& z)
+{
+    switch (face)
+    {
+    case 0: // Back +Y (texture_back)
+        x = 100.f - 200.f * u;
+        y = 100.f;
+        z = 100.f - 200.f * v;
+        break;
+    case 1: // Left -X
+        x = -100.f;
+        y = 100.f - 200.f * u;
+        z = 100.f - 200.f * v;
+        break;
+    case 2: // Front -Y
+        x = -100.f + 200.f * u;
+        y = -100.f;
+        z = 100.f - 200.f * v;
+        break;
+    case 3: // Right +X
+        x = 100.f;
+        y = -100.f + 200.f * u;
+        z = 100.f - 200.f * v;
+        break;
+    case 4: // Top +Z
+        x = -100.f + 200.f * u;
+        y = 100.f - 200.f * v;
+        z = 100.f;
+        break;
+    case 5: // Bottom -Z
+        x = -100.f + 200.f * u;
+        y = -100.f + 200.f * v;
+        z = -100.f;
+        break;
+    default:
+        x = 100.f - 200.f * u;
+        y = 100.f;
+        z = 100.f - 200.f * v;
+        break;
+    }
 }
 #endif//FEATURE_3D_RENDERING
 
@@ -68,6 +115,9 @@ void GuiViewport3D::onDraw(sf::RenderTarget& window)
     glGetDoublev(GL_VIEWPORT, viewport);
 
     glDepthMask(false);
+    // Immediate-mode star cube / nebula / decals must run with fixed-function; a bound GLSL program can yield black geometry.
+    sf::Shader::bind(NULL);
+    glDisable(GL_LIGHTING);
     string texture_front = "StarsFront";
     string texture_back = "StarsBack";
     string texture_left = "StarsLeft";
@@ -159,6 +209,37 @@ void GuiViewport3D::onDraw(sf::RenderTarget& window)
             glTexCoord2f(   0, 1.0); glVertex3f(-100, 100,-100);
             glEnd();
             glPopMatrix();
+        }
+        // Scripted sky-cube decals (Lua setBackgroundSkyboxLayer): sub-rectangle on a face, same UV mapping as stars.
+        for (int n = 0; n < GameGlobalInfo::max_background_sky_layers; n++)
+        {
+            const BackgroundSkyboxLayer& layer = gameGlobalInfo->background_sky_layers[n];
+            if (!layer.defined || layer.textureName == "")
+                continue;
+            const float u0 = std::max(0.f, std::min(1.f, layer.face_u - layer.face_half_u));
+            const float u1 = std::max(0.f, std::min(1.f, layer.face_u + layer.face_half_u));
+            const float v0 = std::max(0.f, std::min(1.f, layer.face_v - layer.face_half_v));
+            const float v1 = std::max(0.f, std::min(1.f, layer.face_v + layer.face_half_v));
+            float x00, y00, z00, x01, y01, z01, x10, y10, z10, x11, y11, z11;
+            skyboxLayerFaceCorner(layer.face, u0, v0, x00, y00, z00);
+            skyboxLayerFaceCorner(layer.face, u0, v1, x01, y01, z01);
+            skyboxLayerFaceCorner(layer.face, u1, v0, x10, y10, z10);
+            skyboxLayerFaceCorner(layer.face, u1, v1, x11, y11, z11);
+            sf::Texture* tex = textureManager.getTexture(layer.textureName);
+            const float tw = std::max(1.f, static_cast<float>(tex->getSize().x));
+            const float th = std::max(1.f, static_cast<float>(tex->getSize().y));
+            sf::Texture::bind(tex, sf::Texture::Pixels);
+            // Match nebula binding (Pixels). Modulate texture with glColor; fragment alpha = tex_a * layer.alpha.
+            glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(1.f, 1.f, 1.f, layer.alpha);
+            glBegin(GL_TRIANGLE_STRIP);
+            glTexCoord2f(0.f, 0.f); glVertex3f(x00, y00, z00);
+            glTexCoord2f(0.f, th); glVertex3f(x01, y01, z01);
+            glTexCoord2f(tw, 0.f); glVertex3f(x10, y10, z10);
+            glTexCoord2f(tw, th); glVertex3f(x11, y11, z11);
+            glEnd();
         }
     }
 

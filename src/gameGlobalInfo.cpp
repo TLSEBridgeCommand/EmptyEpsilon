@@ -1,8 +1,11 @@
 #include <i18n.h>
+#include <algorithm>
+#include <cctype>
 #include "gameGlobalInfo.h"
 #include "preferenceManager.h"
 #include "resources.h"
 #include "scienceDatabase.h"
+#include "scriptInterface.h"
 
 P<GameGlobalInfo> gameGlobalInfo;
 
@@ -28,6 +31,25 @@ GameGlobalInfo::GameGlobalInfo()
         nebula_info[n].textureName = "Nebula" + string(irandom(1, 3));
         registerMemberReplication(&nebula_info[n].vector);
         registerMemberReplication(&nebula_info[n].textureName);
+    }
+    for (int n = 0; n < max_background_sky_layers; n++)
+    {
+        background_sky_layers[n].defined = false;
+        background_sky_layers[n].face = SkyboxFace_Back;
+        background_sky_layers[n].face_u = 0.5f;
+        background_sky_layers[n].face_v = 0.5f;
+        background_sky_layers[n].face_half_u = 0.5f;
+        background_sky_layers[n].face_half_v = 0.5f;
+        background_sky_layers[n].textureName = "";
+        background_sky_layers[n].alpha = 0.15f;
+        registerMemberReplication(&background_sky_layers[n].defined);
+        registerMemberReplication(&background_sky_layers[n].face);
+        registerMemberReplication(&background_sky_layers[n].face_u);
+        registerMemberReplication(&background_sky_layers[n].face_v);
+        registerMemberReplication(&background_sky_layers[n].face_half_u);
+        registerMemberReplication(&background_sky_layers[n].face_half_v);
+        registerMemberReplication(&background_sky_layers[n].textureName);
+        registerMemberReplication(&background_sky_layers[n].alpha);
     }
     for(int n=0; n<max_map_layers; n++)
     {
@@ -227,6 +249,12 @@ void GameGlobalInfo::reset()
     callsign_counter = 0;
     victory_faction = -1;
     allow_new_player_ships = true;
+
+    for (int n = 0; n < max_background_sky_layers; n++)
+    {
+        background_sky_layers[n].defined = false;
+        background_sky_layers[n].textureName = "";
+    }
 }
 
 void GameGlobalInfo::startScenario(string filename)
@@ -264,6 +292,37 @@ void GameGlobalInfo::destroy()
     MultiplayerObject::destroy();
     if (state_logger)
         state_logger->destroy();
+}
+
+void GameGlobalInfo::setBackgroundSkyboxLayer(int index, string textureName, int face, float center_u, float center_v, float half_u, float half_v, float alpha)
+{
+    if (!game_server)
+    {
+        LOG(ERROR) << "GameGlobalInfo::setBackgroundSkyboxLayer can only be called on the server";
+        return;
+    }
+    if (index < 0 || index >= max_background_sky_layers)
+        return;
+    if (textureName == "")
+    {
+        background_sky_layers[index].defined = false;
+        background_sky_layers[index].textureName = "";
+        return;
+    }
+    if (face < 0 || face > 5)
+        face = 0;
+    center_u = std::max(0.f, std::min(1.f, center_u));
+    center_v = std::max(0.f, std::min(1.f, center_v));
+    half_u = std::max(0.f, half_u);
+    half_v = std::max(0.f, half_v);
+    background_sky_layers[index].defined = true;
+    background_sky_layers[index].textureName = textureName;
+    background_sky_layers[index].face = face;
+    background_sky_layers[index].face_u = center_u;
+    background_sky_layers[index].face_v = center_v;
+    background_sky_layers[index].face_half_u = half_u;
+    background_sky_layers[index].face_half_v = half_v;
+    background_sky_layers[index].alpha = std::min(1.0f, std::max(0.0f, alpha));
 }
 
 void GameGlobalInfo::setMapLayer(int layerId, string textureName, sf::Vector2f coordinates, float scale, string title){
@@ -468,6 +527,60 @@ static int setBanner(lua_State* L)
 /// setBanner(string)
 /// Show a scrolling banner containing this text on the cinematic and top down views.
 REGISTER_SCRIPT_FUNCTION(setBanner);
+
+static int luaSkyboxFaceArg(lua_State* L, int arg)
+{
+    if (lua_type(L, arg) == LUA_TNUMBER)
+    {
+        int f = luaL_checkinteger(L, arg);
+        luaL_argcheck(L, f >= 0 && f <= 5, arg, "face must be 0..5 or back/left/front/right/top/bottom");
+        return f;
+    }
+    string s = luaL_checkstring(L, arg);
+    for (unsigned int i = 0; i < s.length(); i++)
+        s[i] = char(tolower(s[i]));
+    if (s == "back") return 0;
+    if (s == "left") return 1;
+    if (s == "front") return 2;
+    if (s == "right") return 3;
+    if (s == "top") return 4;
+    if (s == "bottom") return 5;
+    luaL_argerror(L, arg, "face must be back/left/front/right/top/bottom or 0..5");
+    return 0;
+}
+
+static int setBackgroundSkyboxLayer(lua_State* L)
+{
+    if (!gameGlobalInfo)
+        return 0;
+    const int idx = luaL_checkinteger(L, 1) - 1;
+    luaL_argcheck(L, idx >= 0 && idx < GameGlobalInfo::max_background_sky_layers, 1, "index must be 1..8");
+    const string tex = luaL_checkstring(L, 2);
+    const int face = luaSkyboxFaceArg(L, 3);
+    const float cu = static_cast<float>(luaL_checknumber(L, 4));
+    const float cv = static_cast<float>(luaL_checknumber(L, 5));
+    const float half_u = static_cast<float>(luaL_optnumber(L, 6, 0.5));
+    const float half_v = static_cast<float>(luaL_optnumber(L, 7, half_u));
+    const float alpha = static_cast<float>(luaL_optnumber(L, 8, 0.15));
+    gameGlobalInfo->setBackgroundSkyboxLayer(idx, tex, face, cu, cv, half_u, half_v, alpha);
+    return 0;
+}
+/// setBackgroundSkyboxLayer(index, textureName, face, center_u, center_v [, half_u [, half_v [, alpha]]])
+/// Places a texture on the cube: back/left/front/right/top/bottom or 0..5).
+REGISTER_SCRIPT_FUNCTION(setBackgroundSkyboxLayer);
+
+static int clearBackgroundSkyboxLayer(lua_State* L)
+{
+    if (!gameGlobalInfo)
+        return 0;
+    const int idx = luaL_checkinteger(L, 1) - 1;
+    luaL_argcheck(L, idx >= 0 && idx < GameGlobalInfo::max_background_sky_layers, 1, "index must be 1..8");
+    gameGlobalInfo->setBackgroundSkyboxLayer(idx, "", 0, 0.5f, 0.5f, 0.5f, 0.5f, 0.f);
+    return 0;
+}
+
+/// Clears the skybox layer at the given index.
+REGISTER_SCRIPT_FUNCTION(clearBackgroundSkyboxLayer);
 
 static int getScenarioTime(lua_State* L)
 {

@@ -18,6 +18,32 @@ public:
     string textureName;
 };
 
+/** Face index of the sky cube - StarsBack, etc.). */
+enum ESkyboxCubeFace : int32_t
+{
+    SkyboxFace_Back = 0,   // +Y (texture_back / StarsBack)
+    SkyboxFace_Left = 1,   // -X
+    SkyboxFace_Front = 2,  // -Y
+    SkyboxFace_Right = 3,  // +X
+    SkyboxFace_Top = 4,    // +Z
+    SkyboxFace_Bottom = 5, // -Z
+};
+
+/** Decal layer on top of the sky cube. */
+struct BackgroundSkyboxLayer
+{
+    bool defined = false;
+    int32_t face = SkyboxFace_Back;
+    /** Center of the decal on the face, normalized [0,1] (0,0) = first corner, (1,1) = opposite. */
+    float face_u = 0.5f;
+    float face_v = 0.5f;
+    /** Half-size in UV space on the face; 0.5 x 0.5 covers the full face from center. */
+    float face_half_u = 0.5f;
+    float face_half_v = 0.5f;
+    string textureName;
+    float alpha = 0.15f;
+};
+
 /*
 class TerrainInfo
 {
@@ -75,6 +101,8 @@ public:
      * \brief Maximum number of visual background nebulas.
      */
     static const int max_nebulas = 32;
+    /*! Number of optional shared skybox-style billboard layers (e.g. distant sun). */
+    static const int max_background_sky_layers = 8;
     /*!
      * \brief Maximum number of warp layers
      */
@@ -100,6 +128,7 @@ public:
 
     std::vector<float> reputation_points;
     NebulaInfo nebula_info[max_nebulas];
+    BackgroundSkyboxLayer background_sky_layers[max_background_sky_layers];
     EPlayerWarpJumpDrive player_warp_jump_drive_setting;
     EScanningComplexity scanning_complexity;
     //Hacking difficulty ranges from 0 to 3
@@ -175,6 +204,8 @@ public:
 
     string getNextShipCallsign();
     void setMapLayer(int layerId, string textureName, sf::Vector2f coordinates, float scale, string title);
+    /** Set a sky-cube decal (index 0 .. max_background_sky_layers-1). Empty textureName clears. */
+    void setBackgroundSkyboxLayer(int index, string textureName, int face, float center_u, float center_v, float half_u, float half_v, float alpha);
     sf::Color getLayerPixel(int layerId, sf::Vector2f coordinates);
 };
 
