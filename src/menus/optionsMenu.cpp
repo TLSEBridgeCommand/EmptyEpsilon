@@ -4,6 +4,7 @@
 #include "main.h"
 #include "preferenceManager.h"
 #include "instanceNameDisplay.h"
+#include "playerInfo.h"
 
 #include "gui/gui2_autolayout.h"
 #include "gui/gui2_overlay.h"
@@ -16,6 +17,54 @@
 #include "gui/gui2_keyvaluedisplay.h"
 #include "gui/gui2_textentry.h"
 
+#include <algorithm>
+#include <functional>
+#include <set>
+#include <vector>
+
+namespace
+{
+/**
+ * Standard on/off row for boolean options: title, then [Enabled] [Disabled].
+ * The Enabled button is highlighted when \a enabled is true.
+ */
+void addEnabledDisabledRow(GuiAutoLayout* parent, const string& id_prefix, const string& title, bool enabled,
+    std::function<void(bool)> onEnabledChanged)
+{
+    (new GuiLabel(parent, id_prefix + "_TITLE", title, 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    // LayoutVerticalColumns splits width evenly; HorizontalLeftToRight leaves both buttons at
+    // GuiSizeMax width so they overlap and only the top one receives clicks.
+    GuiElement* row = new GuiAutoLayout(parent, id_prefix + "_ROW", GuiAutoLayout::LayoutVerticalColumns);
+    row->setSize(GuiElement::GuiSizeMax, 50);
+    struct BtnPair
+    {
+        GuiButton* btn_enabled = nullptr;
+        GuiButton* btn_disabled = nullptr;
+        void sync(bool on)
+        {
+            btn_enabled->setActive(on);
+            btn_disabled->setActive(!on);
+        }
+    };
+    BtnPair* pair = new BtnPair();
+    const string lbl_enabled = tr("options", "Enabled");
+    const string lbl_disabled = tr("options", "Disabled");
+    pair->btn_enabled = new GuiButton(row, id_prefix + "_ENABLED", lbl_enabled, [pair, onEnabledChanged]()
+    {
+        onEnabledChanged(true);
+        pair->sync(true);
+    });
+    pair->btn_disabled = new GuiButton(row, id_prefix + "_DISABLED", lbl_disabled, [pair, onEnabledChanged]()
+    {
+        onEnabledChanged(false);
+        pair->sync(false);
+    });
+    pair->btn_enabled->setSize(GuiElement::GuiSizeMax, 50);
+    pair->btn_disabled->setSize(GuiElement::GuiSizeMax, 50);
+    pair->sync(enabled);
+}
+} // namespace
+
 OptionsMenu::OptionsMenu()
 {
     P<WindowManager> windowManager = engine->getObject("windowManager");
@@ -23,21 +72,23 @@ OptionsMenu::OptionsMenu()
     new GuiOverlay(this, "", colorConfig.background);
     (new GuiOverlay(this, "", sf::Color::White))->setTextureTiled("gui/BackgroundCrosses");
 
-    // Initialize autolayout columns.
-    left_container = new GuiAutoLayout(this, "OPTIONS_LEFT_CONTAINER", GuiAutoLayout::LayoutVerticalTopToBottom);
-    left_container->setPosition(50, 50, ATopLeft)->setSize(300, GuiElement::GuiSizeMax);
-
-    right_container = new GuiAutoLayout(this, "OPTIONS_RIGHT_CONTAINER", GuiAutoLayout::LayoutVerticalTopToBottom);
-    right_container->setPosition(-50, 50, ATopRight)->setSize(600, GuiElement::GuiSizeMax);
-
-    // Options pager
-    options_pager = new GuiSelector(left_container, "OPTIONS_PAGER", [this](int index, string value)
+    // Pager across the top; both columns below hold option pages (no soundtrack preview).
+    options_pager = new GuiSelector(this, "OPTIONS_PAGER", [this](int index, string value)
     {
         graphics_page->setVisible(index == 0);
         audio_page->setVisible(index == 1);
         interface_page->setVisible(index == 2);
+        autoconnect_page->setVisible(index == 3);
+        autoconnect_right_page->setVisible(index == 3);
     });
-    options_pager->setOptions({tr("Graphics options"), tr("Audio options"), tr("Interface options")})->setSelectionIndex(0)->setSize(GuiElement::GuiSizeMax, 50);
+    options_pager->setOptions({tr("Graphics options"), tr("Audio options"), tr("Interface options"), tr("options", "Autoconnect")})->setSelectionIndex(0);
+    options_pager->setPosition(0, 50, ATopCenter)->setSize(1100, 50);
+
+    left_container = new GuiAutoLayout(this, "OPTIONS_LEFT_CONTAINER", GuiAutoLayout::LayoutVerticalTopToBottom);
+    left_container->setPosition(50, 120, ATopLeft)->setSize(700, GuiElement::GuiSizeMax);
+
+    right_container = new GuiAutoLayout(this, "OPTIONS_RIGHT_CONTAINER", GuiAutoLayout::LayoutVerticalTopToBottom);
+    right_container->setPosition(-50, 120, ATopRight)->setSize(700, GuiElement::GuiSizeMax);
 
     graphics_page = new GuiAutoLayout(left_container, "OPTIONS_GRAPHICS", GuiAutoLayout::LayoutVerticalTopToBottom);
     graphics_page->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->show();
@@ -45,6 +96,10 @@ OptionsMenu::OptionsMenu()
     audio_page->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->hide();
     interface_page = new GuiAutoLayout(left_container, "OPTIONS_INTERFACE", GuiAutoLayout::LayoutVerticalTopToBottom);
     interface_page->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->hide();
+    autoconnect_page = new GuiAutoLayout(left_container, "OPTIONS_AUTOCONNECT", GuiAutoLayout::LayoutVerticalTopToBottom);
+    autoconnect_page->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->hide();
+    autoconnect_right_page = new GuiAutoLayout(right_container, "OPTIONS_AUTOCONNECT_RIGHT", GuiAutoLayout::LayoutVerticalTopToBottom);
+    autoconnect_right_page->setPosition(0, 0, ATopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->hide();
 
     // Graphics options
     // Fullscreen toggle.
@@ -175,35 +230,166 @@ OptionsMenu::OptionsMenu()
         PreferencesManager::set(kPrefsAuto2S1uClientOffset, value ? "1" : "0");
     }))->setValue(PreferencesManager::get(kPrefsAuto2S1uClientOffset, "0") == "1")->setSize(GuiElement::GuiSizeMax, 50);
 
-    // Right column, auto layout. Draw first element 50px from top.
-    // Music preview jukebox.
-
-    // Draw list of available music. Grabs every ogg file in the
-    // resources/music folder and lists them by filename.
-    std::vector<string> ambient_music_filenames = findResources("music/ambient/*.ogg");
-    std::sort(ambient_music_filenames.begin(), ambient_music_filenames.end());
-    std::vector<string> combat_music_filenames = findResources("music/combat/*.ogg");
-    std::sort(combat_music_filenames.begin(), combat_music_filenames.end());
-
-    (new GuiLabel(right_container, "PREVIEW_LABEL", tr("Preview Soundtracks"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
-
-    GuiListbox* music_list = new GuiListbox(right_container, "MUSIC_PLAY", [this](int index, string value)
+    // Autoconnect options — left column: role, main screen, stations
+    (new GuiLabel(autoconnect_page, "AC_SECTION_PRIMARY", tr("options", "Primary Station"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
     {
-        soundManager->playMusic(value);
-    });
+        std::vector<string> ac_options;
+        ac_options.push_back(tr("options", "Off"));
+        for (int n = 0; n < max_crew_positions; n++)
+            ac_options.push_back(getCrewPositionName(ECrewPosition(n)));
 
-    for(string filename : ambient_music_filenames)
-        music_list->addEntry(filename.substr(filename.rfind("/") + 1, filename.rfind(".")), filename);
-    for(string filename : combat_music_filenames)
-        music_list->addEntry(filename.substr(filename.rfind("/") + 1, filename.rfind(".")), filename);
+        int ac_sel = PreferencesManager::get("autoconnect", "0").toInt();
+        if (ac_sel < 0 || ac_sel > max_crew_positions)
+            ac_sel = 0;
 
-    music_list->setSize(GuiElement::GuiSizeMax, 750);
+        (new GuiSelector(autoconnect_page, "AUTOCONNECT_ROLE", [](int index, string value)
+        {
+            PreferencesManager::set("autoconnect", string(index));
+        }))->setOptions(ac_options)->setSelectionIndex(ac_sel)->setSize(GuiElement::GuiSizeMax, 50);
+    }
+
+    (new GuiLabel(autoconnect_page, "AC_SECTION_STATIONS", tr("options", "Secondary Stations"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+
+    {
+        struct AutostationSync
+        {
+            GuiListbox* list = nullptr;
+            std::set<int> enabled;
+
+            void save()
+            {
+                std::vector<int> nums(enabled.begin(), enabled.end());
+                std::sort(nums.begin(), nums.end());
+                string s;
+                for (size_t i = 0; i < nums.size(); i++)
+                {
+                    if (i)
+                        s += ",";
+                    s += string(nums[i]);
+                }
+                PreferencesManager::set("autostationslist", s);
+            }
+
+            void refreshEntryNames()
+            {
+                if (!list)
+                    return;
+                for (int n = 0; n < max_crew_positions; n++)
+                {
+                    const int station = n + 1;
+                    string label = getCrewPositionName(ECrewPosition(n));
+                    if (enabled.find(station) != enabled.end())
+                        label = tr("options", "[On] {station}").format({{"station", label}});
+                    else
+                        label = tr("options", "[Off] {station}").format({{"station", label}});
+                    list->setEntryName(n, label);
+                }
+            }
+
+            void toggle(int station_1_based)
+            {
+                if (station_1_based < 1 || station_1_based > max_crew_positions)
+                    return;
+                if (enabled.find(station_1_based) != enabled.end())
+                    enabled.erase(station_1_based);
+                else
+                    enabled.insert(station_1_based);
+                save();
+                refreshEntryNames();
+            }
+        };
+
+        AutostationSync* sync = new AutostationSync();
+        for (string part : PreferencesManager::get("autostationslist", "").split(","))
+        {
+            int t = part.strip().toInt();
+            if (t >= 1 && t <= max_crew_positions)
+                sync->enabled.insert(t);
+        }
+
+        GuiListbox* station_list = new GuiListbox(autoconnect_page, "AUTO_STATION_LIST", [sync](int index, string value)
+        {
+            sync->toggle(value.toInt());
+            // Keep list selection on the row just toggled for feedback.
+            if (sync->list)
+                sync->list->setSelectionIndex(index);
+        });
+        sync->list = station_list;
+        station_list->setTextSize(28)->setButtonHeight(45);
+        station_list->setSize(GuiElement::GuiSizeMax, 480);
+
+        for (int n = 0; n < max_crew_positions; n++)
+            station_list->addEntry(getCrewPositionName(ECrewPosition(n)), string(n + 1));
+        sync->refreshEntryNames();
+    }
+
+    // Autoconnect options — right column: connection details
+    (new GuiLabel(autoconnect_right_page, "AC_SECTION_MORE", tr("options", "Connection details"), 30))->addBackground()->setSize(GuiElement::GuiSizeMax, 50);
+    {
+        GuiElement* row = new GuiAutoLayout(autoconnect_right_page, "", GuiAutoLayout::LayoutHorizontalLeftToRight);
+        row->setSize(GuiElement::GuiSizeMax, 50);
+        (new GuiLabel(row, "AC_SHIP_IDX_LABEL", tr("options", "Ship index (1-based)"), 30))->setAlignment(ACenterRight)->setSize(200, GuiElement::GuiSizeMax);
+        (new GuiTextEntry(row, "AC_SHIP_IDX", PreferencesManager::get("autoconnect_ship_index", "1")))->callback([](string text)
+        {
+            PreferencesManager::set("autoconnect_ship_index", text.strip());
+        })->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
+    {
+        GuiElement* row = new GuiAutoLayout(autoconnect_right_page, "", GuiAutoLayout::LayoutHorizontalLeftToRight);
+        row->setSize(GuiElement::GuiSizeMax, 50);
+        (new GuiLabel(row, "AC_SHIP_FILTER_LABEL", tr("options", "Ship filter (autoconnectship)"), 30))->setAlignment(ACenterRight)->setSize(200, GuiElement::GuiSizeMax);
+        (new GuiTextEntry(row, "AC_SHIP_FILTER", PreferencesManager::get("autoconnectship", "solo")))->callback([](string text)
+        {
+            PreferencesManager::set("autoconnectship", text);
+        })->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
+    {
+        GuiElement* row = new GuiAutoLayout(autoconnect_right_page, "", GuiAutoLayout::LayoutHorizontalLeftToRight);
+        row->setSize(GuiElement::GuiSizeMax, 50);
+        (new GuiLabel(row, "AC_ADDR_LABEL", tr("options", "Server address (optional)"), 30))->setAlignment(ACenterRight)->setSize(200, GuiElement::GuiSizeMax);
+        (new GuiTextEntry(row, "AC_ADDR", PreferencesManager::get("autoconnect_address", "")))->callback([](string text)
+        {
+            PreferencesManager::set("autoconnect_address", text);
+        })->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
+    {
+        GuiElement* row = new GuiAutoLayout(autoconnect_right_page, "", GuiAutoLayout::LayoutHorizontalLeftToRight);
+        row->setSize(GuiElement::GuiSizeMax, 50);
+        (new GuiLabel(row, "AC_TRY_SEC_LABEL", tr("options", "Server try interval (seconds)"), 30))->setAlignment(ACenterRight)->setSize(200, GuiElement::GuiSizeMax);
+        (new GuiTextEntry(row, "AC_TRY_SEC", PreferencesManager::get("autoconnect_server_try_seconds", "10")))->callback([](string text)
+        {
+            PreferencesManager::set("autoconnect_server_try_seconds", text.strip());
+        })->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    }
+
+    addEnabledDisabledRow(autoconnect_right_page, "AC_MULTI_SERVER", tr("options", "Multi-server name rotation"),
+        PreferencesManager::get("multi_server_mode", "0").toInt() > 0,
+        [](bool enabled)
+        {
+            PreferencesManager::set("multi_server_mode", enabled ? "1" : "0");
+        });
+
+    addEnabledDisabledRow(autoconnect_right_page, "AC_CODE_BYPASS", tr("options", "Bypass ship control code"),
+        PreferencesManager::get("autoconnect_control_code_bypass", "0") == "1",
+        [](bool enabled)
+        {
+            PreferencesManager::set("autoconnect_control_code_bypass", enabled ? "1" : "0");
+        });
+
+    addEnabledDisabledRow(autoconnect_right_page, "AC_NUMERIC_PAD", tr("options", "Prefer numeric pad for control code"),
+        PreferencesManager::get("autoconnect_control_code_prefer_numeric_pad", "0").toInt() > 0,
+        [](bool enabled)
+        {
+            PreferencesManager::set("autoconnect_control_code_prefer_numeric_pad", enabled ? "1" : "0");
+        });
+
+    (new GuiLabel(autoconnect_right_page, "AC_HINT_RESTART", tr("options", "Restart the game to run autoconnect from options."), 20))->setSize(GuiElement::GuiSizeMax, 36);
 
     // Bottom GUI.
     // Back button.
     (new GuiButton(this, "BACK", tr("options", "Back"), [this]()
     {
-        // Close this menu, stop the music, and return to the main menu.
+        // Close this menu and return to the main menu.
         destroy();
         soundManager->stopMusic();
         returnToMainMenu();

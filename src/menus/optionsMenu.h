@@ -17,6 +17,8 @@ private:
     GuiAutoLayout* graphics_page;
     GuiAutoLayout* audio_page;
     GuiAutoLayout* interface_page;
+    GuiAutoLayout* autoconnect_page;
+    GuiAutoLayout* autoconnect_right_page;
     GuiSlider* sound_volume_slider;
     GuiSlider* music_volume_slider;
     GuiSlider* impulse_volume_slider;
