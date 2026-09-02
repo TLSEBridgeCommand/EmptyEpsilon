@@ -91,6 +91,7 @@ public:
 
     friend class GuiContainer;
     friend class GuiCanvas;
+    friend class GuiClipPanel;
 private:
     void updateRect(sf::FloatRect parent_rect);
 protected:

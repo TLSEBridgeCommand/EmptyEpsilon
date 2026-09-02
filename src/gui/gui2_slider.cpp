@@ -42,12 +42,16 @@ void GuiBasicSlider::onDraw(sf::RenderTarget& window)
 
 bool GuiBasicSlider::onMouseDown(sf::Vector2f position)
 {
+    if (!enabled)
+        return false;
     onMouseDrag(position);
     return true;
 }
 
 void GuiBasicSlider::onMouseDrag(sf::Vector2f position)
 {
+    if (!enabled)
+        return;
     float new_value;
     if (rect.width > rect.height)
         new_value = (position.x - rect.left - (rect.height / 2.0)) / (rect.width - rect.height);
@@ -189,12 +193,16 @@ void GuiSlider::onDraw(sf::RenderTarget& window)
 
 bool GuiSlider::onMouseDown(sf::Vector2f position)
 {
+    if (!enabled)
+        return false;
     onMouseDrag(position);
     return true;
 }
 
 void GuiSlider::onMouseDrag(sf::Vector2f position)
 {
+    if (!enabled)
+        return;
     float new_value;
     if (rect.width > rect.height)
         new_value = (position.x - rect.left - (rect.height / 2.0)) / (rect.width - rect.height);

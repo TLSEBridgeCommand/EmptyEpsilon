@@ -280,6 +280,7 @@ set(SOURCES
 	src/gui/gui2_scrollbar.cpp
 	src/gui/gui2_container.cpp
 	src/gui/gui2_panel.cpp
+	src/gui/gui2_clippanel.cpp
 	src/gui/gui2_overlay.cpp
 	src/spaceObjects/missiles/missileWeapon.cpp
 	src/spaceObjects/missiles/EMPMissile.cpp
